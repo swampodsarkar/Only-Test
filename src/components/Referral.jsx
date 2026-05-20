@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, update } from '../config/firebase';
-import { addReward, settings } from '../utils/helpers';
+import { addReward, settings, coinsToBDT } from '../utils/helpers';
 import { HiShare, HiUserGroup, HiLink, HiClipboard } from 'react-icons/hi';
 
 export default function Referral() {
@@ -15,18 +15,18 @@ export default function Referral() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink).then(() => {
       setCopied(true);
-      toast.success('📋 Referral link copied!');
+      toast.success('📋 রেফারেল লিংক কপি হয়েছে!');
       setTimeout(() => setCopied(false), 2000);
     }).catch(() => {
-      toast.error('Failed to copy');
+      toast.error('কপি করতে ব্যর্থ');
     });
   };
 
   const handleShare = () => {
-    const text = `🚀 Join Kamai BD and start earning coins!\n\n✅ Complete tasks\n📺 Watch ads\n💰 Withdraw real money\n\n👉 ${referralLink}\n\nUse my link to get 50 bonus coins!`;
+    const text = `🚀 Kamai BD তে জয়েন করুন এবং কয়েন অর্জন শুরু করুন!\n\n✅ কাজ সম্পন্ন করুন\n📺 ভিডিও দেখুন\n💰 আসল টাকা উইথড্র করুন\n\n👉 ${referralLink}\n\nআমার লিংক ব্যবহার করে ৫০ বোনাস কয়েন পান!`;
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(text)}`;
     window.open(shareUrl, '_blank');
-    toast.success('Shared successfully!');
+    toast.success('শেয়ার সফল হয়েছে!');
   };
 
   const handleReferUser = async (referredUserId) => {
@@ -57,8 +57,8 @@ export default function Referral() {
     <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-xl font-bold text-white">Refer & Earn</h1>
-        <p className="text-xs text-white/40 mt-0.5">Invite friends and earn bonus coins</p>
+        <h1 className="text-lg font-bold text-white">রেফার করে আয় করুন</h1>
+        <p className="text-xs text-white/40 mt-0.5">বন্ধুদের আমন্ত্রণ জানান এবং বোনাস কয়েন অর্জন করুন</p>
       </div>
 
       {/* Hero Card */}
@@ -72,18 +72,18 @@ export default function Referral() {
           <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center animate-bounce-subtle">
             <HiUserGroup className="text-3xl text-purple-400" />
           </div>
-          <h2 className="text-lg font-bold text-white mb-1">Invite Friends</h2>
-          <p className="text-sm text-white/50 mb-4">Both you and your friend earn bonus coins!</p>
+          <h2 className="text-lg font-bold text-white mb-1">বন্ধুদের আমন্ত্রণ জানান</h2>
+          <p className="text-sm text-white/50 mb-4">আপনি এবং আপনার বন্ধু উভয়েই বোনাস কয়েন পাবেন!</p>
 
           {/* Bonus Cards */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="glass rounded-xl p-3">
               <p className="text-2xl font-bold gradient-text">{settings.referralBonusReferrer}</p>
-              <p className="text-[10px] text-white/40">Your Bonus</p>
+              <p className="text-[10px] text-white/40">আপনার বোনাস</p>
             </div>
             <div className="glass rounded-xl p-3">
               <p className="text-2xl font-bold gradient-text-green">{settings.referralBonusNewUser}</p>
-              <p className="text-[10px] text-white/40">Friend's Bonus</p>
+              <p className="text-[10px] text-white/40">বন্ধুর বোনাস</p>
             </div>
           </div>
 
@@ -93,7 +93,7 @@ export default function Referral() {
             className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 btn-primary text-white mb-2"
           >
             <HiShare className="text-lg" />
-            Share with Friends
+            বন্ধুদের সাথে শেয়ার করুন
           </button>
           <button
             onClick={handleCopyLink}
@@ -106,12 +106,12 @@ export default function Referral() {
             {copied ? (
               <>
                 <HiClipboard className="text-lg" />
-                Copied!
+                কপি হয়েছে!
               </>
             ) : (
               <>
                 <HiLink className="text-lg" />
-                Copy Referral Link
+                রেফারেল লিংক কপি করুন
               </>
             )}
           </button>
@@ -125,11 +125,11 @@ export default function Referral() {
             <HiUserGroup className="text-xl text-purple-400" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-white/40">Total Referrals</p>
+            <p className="text-xs text-white/40">মোট রেফারেল</p>
             <p className="text-2xl font-bold text-white">{user?.referralCount || 0}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-white/40">Earned</p>
+            <p className="text-xs text-white/40">অর্জিত</p>
             <p className="text-lg font-bold gradient-text">+{(user?.referralCount || 0) * settings.referralBonusReferrer}</p>
           </div>
         </div>
@@ -137,12 +137,12 @@ export default function Referral() {
 
       {/* Link Display */}
       <div className="glass rounded-2xl p-4 animate-slide-up stagger-3">
-        <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">Your Referral Link</p>
+        <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">আপনার রেফারেল লিংক</p>
         <div className="p-3 rounded-xl bg-white/5 border border-white/10">
           <p className="text-xs text-violet-300 break-all font-mono">{referralLink}</p>
         </div>
         <p className="text-[10px] text-white/20 mt-2">
-          Share this link. When friends join, both earn bonus coins!
+          এই লিংকটি শেয়ার করুন। বন্ধুরা জয়েন করলে উভয়েই বোনাস কয়েন পাবেন!
         </p>
       </div>
     </div>

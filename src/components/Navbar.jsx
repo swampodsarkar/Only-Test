@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { HiHome, HiClipboardCheck, HiPlay, HiCash, HiUserGroup } from 'react-icons/hi';
+import { HiHome, HiClipboardCheck, HiCurrencyDollar, HiCreditCard, HiQuestionMarkCircle } from 'react-icons/hi';
 
 const navItems = [
-  { path: '/', label: 'Home', icon: HiHome },
-  { path: '/tasks', label: 'Tasks', icon: HiClipboardCheck },
-  { path: '/ads', label: 'Ads', icon: HiPlay },
-  { path: '/withdraw', label: 'Cash', icon: HiCash },
-  { path: '/referral', label: 'Refer', icon: HiUserGroup },
+  { path: '/', label: 'হোম', icon: HiHome },
+  { path: '/tasks', label: 'কাজ', icon: HiClipboardCheck },
+  { path: '/ads', label: 'আয়', icon: HiCurrencyDollar },
+  { path: '/withdraw', label: 'ওয়ালেট', icon: HiCreditCard },
+  { path: '/referral', label: 'সাপোর্ট', icon: HiQuestionMarkCircle },
 ];
 
 export default function Navbar() {
@@ -24,7 +24,7 @@ export default function Navbar() {
               className={({ isActive }) =>
                 `relative flex flex-col items-center justify-center px-3 py-1.5 rounded-2xl transition-all duration-300 group ${
                   isActive
-                    ? 'text-white'
+                    ? 'text-violet-400'
                     : 'text-white/30 hover:text-white/50'
                 }`
               }

@@ -49,12 +49,12 @@ export default function Withdraw() {
 
   const handleSubmit = async () => {
     if (!accountNo.trim()) {
-      toast.error('Please enter your account details');
+      toast.error('অনুগ্রহ করে আপনার অ্যাকাউন্টের বিবরণ দিন');
       return;
     }
 
     if ((user?.balance || 0) < settings.minWithdraw) {
-      toast.error(`Minimum withdraw is ${settings.minWithdraw} coins`);
+      toast.error(`সর্বনিম্ন উইথড্রল ${settings.minWithdraw} কয়েন`);
       return;
     }
 
@@ -73,13 +73,13 @@ export default function Withdraw() {
         processedAt: null,
       });
 
-      toast.success('✅ Withdrawal request submitted!');
+      toast.success('✅ উইথড্রল রিকোয়েস্ট জমা হয়েছে!');
       setShowForm(false);
       setAccountNo('');
       await loadHistory();
     } catch (err) {
       console.error('Withdraw error:', err);
-      toast.error('Failed to submit request');
+      toast.error('রিকোয়েস্ট জমা দিতে ব্যর্থ');
     } finally {
       setSubmitting(false);
     }
@@ -90,19 +90,19 @@ export default function Withdraw() {
       case 'pending':
         return (
           <span className="flex items-center gap-1 text-amber-400 text-xs">
-            <HiClock className="text-sm" /> Pending
+            <HiClock className="text-sm" /> পেন্ডিং
           </span>
         );
       case 'approved':
         return (
           <span className="flex items-center gap-1 text-emerald-400 text-xs">
-            <HiCheckCircle className="text-sm" /> Approved
+            <HiCheckCircle className="text-sm" /> অনুমোদিত
           </span>
         );
       case 'rejected':
         return (
           <span className="flex items-center gap-1 text-red-400 text-xs">
-            <HiXCircle className="text-sm" /> Rejected
+            <HiXCircle className="text-sm" /> বাতিল
           </span>
         );
       default:
@@ -114,8 +114,8 @@ export default function Withdraw() {
     <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-xl font-bold text-white">Withdraw</h1>
-        <p className="text-xs text-white/40 mt-0.5">Convert your coins to real money</p>
+        <h1 className="text-lg font-bold text-white">উইথড্রল</h1>
+        <p className="text-xs text-white/40 mt-0.5">আপনার কয়েন আসল টাকায় রূপান্তর করুন</p>
       </div>
 
       {/* Balance Card */}
@@ -126,16 +126,16 @@ export default function Withdraw() {
 
         <div className="relative z-10 text-center">
           <HiCash className="text-3xl text-amber-400 mx-auto mb-2" />
-          <p className="text-xs text-white/50 uppercase tracking-wider">Available Balance</p>
+          <p className="text-xs text-white/50 uppercase tracking-wider">উপলব্ধ ব্যালেন্স</p>
           <p className="text-4xl font-black text-white mt-1">{formatCoins(user?.balance || 0)}</p>
-          <p className="text-sm text-white/40 mt-0.5">≈ ৳{coinsToBDT(user?.balance || 0)} BDT</p>
+          <p className="text-sm text-white/40 mt-0.5">≈ {coinsToBDT(user?.balance || 0)} BDT</p>
 
           <div className="mt-4 flex items-center justify-center gap-2">
             <div className="glass rounded-full px-3 py-1">
-              <span className="text-[10px] text-white/50">Min: {settings.minWithdraw} coins</span>
+              <span className="text-[10px] text-white/50">সর্বনিম্ন: {settings.minWithdraw} কয়েন</span>
             </div>
             <div className="glass rounded-full px-3 py-1">
-              <span className="text-[10px] text-white/50">10 coins = ৳1</span>
+              <span className="text-[10px] text-white/50">১০ কয়েন = ৳১</span>
             </div>
           </div>
 
@@ -143,7 +143,7 @@ export default function Withdraw() {
             <button
               onClick={() => {
                 if (!canWithdraw) {
-                  toast.error(`Need ${settings.minWithdraw - (user?.balance || 0)} more coins`);
+                  toast.error(`আরও ${settings.minWithdraw - (user?.balance || 0)} কয়েন প্রয়োজন`);
                   return;
                 }
                 setShowForm(true);
@@ -156,7 +156,7 @@ export default function Withdraw() {
               }`}
             >
               <HiArrowUp className="text-lg" />
-              {canWithdraw ? 'Withdraw Now' : `Need ${settings.minWithdraw - (user?.balance || 0)} more coins`}
+              {canWithdraw ? 'এখনই উইথড্র করুন' : `আরও ${settings.minWithdraw - (user?.balance || 0)} কয়েন প্রয়োজন`}
             </button>
           )}
         </div>
@@ -165,11 +165,11 @@ export default function Withdraw() {
       {/* Withdraw Form */}
       {showForm && (
         <div className="glass rounded-2xl p-5 mb-4 animate-slide-up stagger-2">
-          <h3 className="font-semibold text-white mb-4">Withdrawal Details</h3>
+          <h3 className="font-semibold text-white mb-4">উইথড্রলের বিবরণ</h3>
 
           {/* Method Selection */}
           <div className="mb-4">
-            <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">Payment Method</p>
+            <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">পেমেন্ট মেথড</p>
             <div className="grid grid-cols-3 gap-2">
               {methods.map((m) => (
                 <button
@@ -190,14 +190,14 @@ export default function Withdraw() {
 
           {/* Account Input */}
           <div className="mb-4">
-            <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">Account Details</p>
+            <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">অ্যাকাউন্টের বিবরণ</p>
             <input
               type="text"
               value={accountNo}
               onChange={(e) => setAccountNo(e.target.value)}
               placeholder={
                 method === 'bkash'
-                  ? 'bKash Number (01XXXXXXXXX)'
+                  ? 'bKash নম্বর (01XXXXXXXXX)'
                   : method === 'upi'
                   ? 'UPI ID (example@upi)'
                   : 'Telegram Username'
@@ -209,11 +209,11 @@ export default function Withdraw() {
           {/* Summary */}
           <div className="glass rounded-xl p-3 mb-4">
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-white/40">Amount</span>
-              <span className="text-white font-semibold">{formatCoins(user?.balance || 0)} coins</span>
+              <span className="text-white/40">পরিমাণ</span>
+              <span className="text-white font-semibold">{formatCoins(user?.balance || 0)} কয়েন</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-white/40">You receive</span>
+              <span className="text-white/40">আপনি পাবেন</span>
               <span className="text-amber-400 font-bold">৳{coinsToBDT(user?.balance || 0)}</span>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default function Withdraw() {
               onClick={() => setShowForm(false)}
               className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-semibold hover:bg-white/5 transition-all"
             >
-              Cancel
+              বাতিল
             </button>
             <button
               onClick={handleSubmit}
@@ -237,9 +237,9 @@ export default function Withdraw() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Processing...
+                  প্রসেসিং...
                 </span>
-              ) : 'Submit'}
+              ) : 'জমা দিন'}
             </button>
           </div>
         </div>
@@ -247,7 +247,7 @@ export default function Withdraw() {
 
       {/* History */}
       <div className="glass rounded-2xl p-4 animate-slide-up stagger-3">
-        <h3 className="font-semibold text-white mb-3">Withdrawal History</h3>
+        <h3 className="font-semibold text-white mb-3">উইথড্রল ইতিহাস</h3>
         {loadingHistory ? (
           <div className="flex items-center justify-center py-8">
             <svg className="animate-spin h-6 w-6 text-white/20" viewBox="0 0 24 24">
@@ -258,7 +258,7 @@ export default function Withdraw() {
         ) : history.length === 0 ? (
           <div className="text-center py-8">
             <HiCash className="text-3xl text-white/20 mx-auto mb-2" />
-            <p className="text-sm text-white/30">No withdrawal history</p>
+            <p className="text-sm text-white/30">কোনো উইথড্রল ইতিহাস নেই</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -268,7 +268,7 @@ export default function Withdraw() {
                 className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{formatCoins(req.amount)} coins</p>
+                  <p className="text-sm font-semibold text-white">{formatCoins(req.amount)} কয়েন</p>
                   <p className="text-xs text-white/30">
                     {req.method === 'bkash' ? (
                       <span className="inline-flex items-center gap-1"><HiDeviceMobile className="text-sm" /> {req.accountNo}</span>

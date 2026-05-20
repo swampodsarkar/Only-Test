@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, update } from '../config/firebase';
-import { settings, getTodayStr, addReward } from '../utils/helpers';
+import { settings, getTodayStr, addReward, coinsToBDT } from '../utils/helpers';
 import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock } from 'react-icons/hi';
 
 export default function Ads() {
@@ -17,12 +17,12 @@ export default function Ads() {
 
   const handleWatchAd = async () => {
     if (watchLimitReached) {
-      toast.error(`Daily limit reached! (${settings.dailyWatchLimit}/${settings.dailyWatchLimit})`);
+      toast.error(`দৈনিক লিমিট পূর্ণ! (${settings.dailyWatchLimit}/${settings.dailyWatchLimit})`);
       return;
     }
 
     setWatching(true);
-    toast.loading('Loading rewarded video...');
+    toast.loading('ভিডিও লোড হচ্ছে...');
 
     try {
       await new Promise(r => setTimeout(r, 1500));
@@ -56,11 +56,11 @@ export default function Ads() {
         await update(ref(database), updates);
         await refreshUser();
 
-        toast.success(`🎬 +${settings.watchReward} coins earned!`);
+        toast.success(`🎬 +${settings.watchReward} কয়েন অর্জন করেছেন!`);
       }
     } catch (err) {
       console.error('Watch ad error:', err);
-      toast.error('Failed to process ad');
+      toast.error('ভিডিও প্রসেস করতে ব্যর্থ');
     } finally {
       setWatching(false);
     }
@@ -70,8 +70,8 @@ export default function Ads() {
     <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-xl font-bold text-white">Watch & Earn</h1>
-        <p className="text-xs text-white/40 mt-0.5">Watch videos to earn coins instantly</p>
+        <h1 className="text-lg font-bold text-white">ভিডিও দেখে আয় করুন</h1>
+        <p className="text-xs text-white/40 mt-0.5">ভিডিও দেখে তাৎক্ষণিক কয়েন অর্জন করুন</p>
       </div>
 
       {/* Hero Watch Card */}
@@ -88,12 +88,12 @@ export default function Ads() {
             <HiVideoCamera className="text-4xl text-white/80" />
           </div>
 
-          <h2 className="text-lg font-bold text-white mb-1">Rewarded Videos</h2>
-          <p className="text-sm text-white/50 mb-4">Watch short videos and earn coins</p>
+          <h2 className="text-lg font-bold text-white mb-1">রিওয়ার্ডেড ভিডিও</h2>
+          <p className="text-sm text-white/50 mb-4">ছোট ভিডিও দেখে কয়েন অর্জন করুন</p>
 
           <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4">
             <span className="text-lg font-bold gradient-text-green">+{settings.watchReward}</span>
-            <span className="text-xs text-white/60">coins per video</span>
+            <span className="text-xs text-white/60">কয়েন প্রতি ভিডিও</span>
           </div>
 
           <button
@@ -113,12 +113,12 @@ export default function Ads() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Watching...
+                দেখা হচ্ছে...
               </>
             ) : (
               <>
                 <HiPlay className="text-xl" />
-                {watchLimitReached ? 'Daily Limit Reached' : 'Watch Video & Earn'}
+                {watchLimitReached ? 'দৈনিক লিমিট পূর্ণ' : 'ভিডিও দেখে আয় করুন'}
               </>
             )}
           </button>
@@ -130,7 +130,7 @@ export default function Ads() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <HiClock className="text-blue-400" />
-            <span className="text-sm text-white/80 font-medium">Today's Progress</span>
+            <span className="text-sm text-white/80 font-medium">আজকের অগ্রগতি</span>
           </div>
           <span className="text-xs text-white/40 font-mono">{dailyWatchCount} / {settings.dailyWatchLimit}</span>
         </div>
@@ -143,16 +143,17 @@ export default function Ads() {
         <div className="flex items-start gap-2 mt-3">
           <HiInformationCircle className="text-blue-400 text-sm flex-shrink-0 mt-0.5" />
           <p className="text-[10px] text-white/30">
-            Watch up to {settings.dailyWatchLimit} videos daily. Each video rewards {settings.watchReward} coins.
+            প্রতিদিন {settings.dailyWatchLimit}টি ভিডিও দেখতে পারবেন। প্রতিটি ভিডিও {settings.watchReward} কয়েন দেয়।
           </p>
         </div>
       </div>
 
       {/* Earnings Card */}
       <div className="glass rounded-2xl p-4 animate-slide-up stagger-3">
-        <p className="text-xs text-white/40 mb-1">Today's Earnings from Ads</p>
+        <p className="text-xs text-white/40 mb-1">আজকের ভিডিও থেকে আয়</p>
         <p className="text-3xl font-bold gradient-text-green">+{dailyWatchCount * settings.watchReward}</p>
-        <p className="text-xs text-white/30 mt-0.5">coins earned today</p>
+        <p className="text-xs text-white/30 mt-0.5">কয়েন অর্জন করেছেন আজ</p>
+        <p className="text-sm text-white/50 mt-1">≈ ৳{coinsToBDT(dailyWatchCount * settings.watchReward)}</p>
       </div>
     </div>
   );

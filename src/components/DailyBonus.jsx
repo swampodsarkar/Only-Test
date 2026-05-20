@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, update } from '../config/firebase';
-import { addReward, settings } from '../utils/helpers';
+import { addReward, settings, coinsToBDT } from '../utils/helpers';
 import { HiGift, HiFire, HiSparkles } from 'react-icons/hi';
 
 const STREAK_REWARDS = {
@@ -33,7 +33,7 @@ export default function DailyBonus() {
   const handleClaim = async () => {
     if (!canClaim) {
       const nextIn = Math.ceil(24 - hoursSinceLastClaim);
-      toast.error(`Next bonus in ${nextIn} hours`);
+      toast.error(`পরবর্তী বোনাস ${nextIn} ঘণ্টায়`);
       return;
     }
 
@@ -53,10 +53,10 @@ export default function DailyBonus() {
       await addReward(user.id, rewardAmount);
       await refreshUser();
 
-      toast.success(`🔥 Daily Bonus claimed! +${rewardAmount} coins`);
+      toast.success(`🔥 দৈনিক বোনাস ক্লেইম হয়েছে! +${rewardAmount} কয়েন`);
     } catch (err) {
       console.error('Daily bonus error:', err);
-      toast.error('Failed to claim bonus');
+      toast.error('বোনাস ক্লেইম করতে ব্যর্থ');
     } finally {
       setClaiming(false);
     }
@@ -85,12 +85,12 @@ export default function DailyBonus() {
             }`}>
               <HiGift className={`text-lg ${canClaim ? 'text-amber-400' : 'text-white/30'}`} />
             </div>
-            <h3 className="font-bold text-white">Daily Bonus</h3>
+            <h3 className="font-bold text-white">দৈনিক বোনাস</h3>
           </div>
           {streak > 0 && (
             <div className="flex items-center gap-1 text-orange-400">
               <HiFire className="text-sm" />
-              <span className="text-xs font-bold">{streak} day streak</span>
+              <span className="text-xs font-bold">{streak} দিন স্ট্রিক</span>
             </div>
           )}
         </div>
@@ -131,16 +131,16 @@ export default function DailyBonus() {
           <div className="inline-flex items-center gap-1.5">
             <HiSparkles className="text-amber-400" />
             <span className="text-2xl font-black gradient-text-gold">+{currentReward}</span>
-            <span className="text-sm text-white/40">coins</span>
+            <span className="text-sm text-white/40">কয়েন</span>
           </div>
           {streak > 0 && streak < 7 && (
             <p className="text-[10px] text-white/20 mt-1">
-              Next: +{nextReward} coins (Day {Math.min(streak + 1, 7)})
+              পরবর্তী: +{nextReward} কয়েন (দিন {Math.min(streak + 1, 7)})
             </p>
           )}
           {streak >= 7 && (
             <p className="text-[10px] text-amber-400/50 mt-1">
-              <HiFire className="inline text-xs" /> Max streak! Resets after claiming.
+              <HiFire className="inline text-xs" /> সর্বোচ্চ স্ট্রিক! ক্লেইম করার পর রিসেট হবে।
             </p>
           )}
         </div>
@@ -163,12 +163,12 @@ export default function DailyBonus() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Claiming...
+              ক্লেইম হচ্ছে...
             </span>
           ) : canClaim ? (
-            `Claim ${currentReward} Coins`
+            `${currentReward} কয়েন ক্লেইম করুন`
           ) : (
-            `Next in ${Math.ceil(24 - hoursSinceLastClaim)}h`
+            `পরবর্তী ${Math.ceil(24 - hoursSinceLastClaim)} ঘণ্টায়`
           )}
         </button>
       </div>

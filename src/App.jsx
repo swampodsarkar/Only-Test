@@ -21,7 +21,7 @@ function LoadingScreen() {
           <HiSparkles className="text-4xl text-violet-400" />
         </div>
         <h1 className="text-2xl font-bold gradient-text mb-2">Kamai BD</h1>
-        <p className="text-sm text-white/30 mb-4">Loading your dashboard...</p>
+        <p className="text-sm text-white/30 mb-4">আপনার ড্যাশবোর্ড লোড হচ্ছে...</p>
         <div className="flex items-center justify-center gap-1">
           <div className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -51,13 +51,13 @@ function AppRoutes() {
           </div>
           <h1 className="text-2xl font-bold gradient-text mb-2">Kamai BD</h1>
           <p className="text-white/40 text-sm mb-6">
-            Open this app from Telegram to start earning!
+            আয় শুরু করতে Telegram থেকে অ্যাপটি ওপেন করুন!
           </p>
           <a
             href="https://t.me/kamaibd_bot/app"
             className="inline-block px-8 py-4 rounded-2xl btn-primary text-white font-semibold text-sm"
           >
-            Open in Telegram
+            Telegram এ ওপেন করুন
           </a>
         </div>
       </div>

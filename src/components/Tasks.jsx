@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, update } from '../config/firebase';
-import { TASKS, addReward, getTodayStr, checkDailyCheckin } from '../utils/helpers';
-import { HiCheckCircle, HiArrowRight, HiSparkles } from 'react-icons/hi';
+import { TASKS, addReward, getTodayStr, checkDailyCheckin, coinsToBDT } from '../utils/helpers';
+import { HiCheckCircle, HiArrowRight, HiSparkles, HiPlay, HiVideoCamera, HiCheck, HiShare, HiUser } from 'react-icons/hi';
 
 export default function Tasks() {
   const { user, refreshUser } = useAuth();
@@ -54,7 +54,7 @@ export default function Tasks() {
           await markTaskCompleted(task.id);
           await addReward(user.id, task.reward);
           await refreshUser();
-          toast.success(`🎉 +${task.reward} coins earned!`);
+          toast.success(` +${task.reward} কয়েন অর্জন করেছেন!`);
           break;
         }
         case 'task_adsgram': {
@@ -64,7 +64,7 @@ export default function Tasks() {
           await addReward(user.id, task.reward);
           await refreshUser();
           toast.dismiss(loadingToast);
-          toast.success(`🎉 +${task.reward} coins earned!`);
+          toast.success(`🎉 +${task.reward} কয়েন অর্জন করেছেন!`);
           break;
         }
         case 'task_daily_checkin': {
@@ -77,7 +77,7 @@ export default function Tasks() {
           await markTaskCompleted(task.id, todayKey);
           await addReward(user.id, task.reward);
           await refreshUser();
-          toast.success(`✅ +${task.reward} coins earned!`);
+          toast.success(`✅ +${task.reward} কয়েন অর্জন করেছেন!`);
           break;
         }
         case 'task_share': {
@@ -86,7 +86,7 @@ export default function Tasks() {
           await markTaskCompleted(task.id);
           await addReward(user.id, task.reward);
           await refreshUser();
-          toast.success(`📤 +${task.reward} coins earned!`);
+          toast.success(`📤 +${task.reward} কয়েন অর্জন করেছেন!`);
           break;
         }
         case 'task_profile': {
@@ -97,7 +97,7 @@ export default function Tasks() {
           await markTaskCompleted(task.id);
           await addReward(user.id, task.reward);
           await refreshUser();
-          toast.success(`👤 +${task.reward} coins earned!`);
+          toast.success(`👤 +${task.reward} কয়েন অর্জন করেছেন!`);
           break;
         }
       }
@@ -111,13 +111,21 @@ export default function Tasks() {
 
   const completedCount = TASKS.filter(t => isTaskCompleted(t.id)).length;
 
+  const taskIcons = {
+    task_join_channel: HiShare,
+    task_adsgram: HiVideoCamera,
+    task_daily_checkin: HiCheck,
+    task_share: HiShare,
+    task_profile: HiUser,
+  };
+
   return (
     <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-white">Tasks</h1>
-          <p className="text-xs text-white/40 mt-0.5">Complete tasks to earn coins</p>
+          <h1 className="text-lg font-bold text-white">কাজ সম্পন্ন করুন</h1>
+          <p className="text-xs text-white/40 mt-0.5">কাজ করে কয়েন অর্জন করুন</p>
         </div>
         <div className="glass rounded-xl px-3 py-2">
           <span className="text-xs text-white/60">{completedCount}/{TASKS.length}</span>
@@ -129,7 +137,7 @@ export default function Tasks() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <HiSparkles className="text-amber-400" />
-            <span className="text-sm text-white/80 font-medium">Task Progress</span>
+            <span className="text-sm text-white/80 font-medium">কাজের অগ্রগতি</span>
           </div>
           <span className="text-xs text-white/40">{Math.round((completedCount / TASKS.length) * 100)}%</span>
         </div>
@@ -146,6 +154,7 @@ export default function Tasks() {
         {TASKS.map((task, idx) => {
           const completed = isTaskCompleted(task.id);
           const isLoading = loading[task.id];
+          const IconComponent = taskIcons[task.id] || HiSparkles;
 
           return (
             <div
@@ -162,26 +171,27 @@ export default function Tasks() {
 
               <div className="relative p-4 flex items-center gap-3">
                 {/* Icon */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   completed
                     ? 'bg-emerald-500/20'
                     : 'bg-gradient-to-br from-violet-500/20 to-indigo-500/20'
                 }`}>
                   {completed ? (
-                    <HiCheckCircle className="text-emerald-400 text-xl" />
+                    <HiCheckCircle className="text-emerald-400 text-lg" />
                   ) : (
-                    <task.icon className="text-violet-400 text-xl" />
+                    <IconComponent className="text-violet-400 text-lg" />
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm text-white">{task.title}</h3>
-                  <p className="text-xs text-white/40 mt-0.5 line-clamp-1">{task.description}</p>
+                  <p className="text-[10px] text-white/40 mt-0.5 line-clamp-1">{task.description}</p>
                   <div className="flex items-center gap-1 mt-1">
-                    <span className="text-[10px] font-semibold text-violet-400">+{task.reward} coins</span>
+                    <span className="text-[10px] font-semibold text-violet-400">+{task.reward} কয়েন</span>
+                    <span className="text-[10px] text-white/30">• ৳{coinsToBDT(task.reward)}</span>
                     {completed && (
-                      <span className="text-[10px] text-emerald-400 ml-1">• Completed</span>
+                      <span className="text-[10px] text-emerald-400 ml-1">• সম্পন্ন</span>
                     )}
                   </div>
                 </div>
@@ -209,7 +219,7 @@ export default function Tasks() {
                         </svg>
                       ) : (
                         <>
-                          Verify
+                          ভেরিফাই
                           <HiArrowRight />
                         </>
                       )}

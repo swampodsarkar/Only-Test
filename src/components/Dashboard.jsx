@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { formatCoins, coinsToBDT, getTodayStr } from '../utils/helpers';
+import { formatCoins, coinsToBDT, getTodayStr, settings } from '../utils/helpers';
 import { 
   HiBell, HiSparkles, HiPlay, HiStar, HiArrowUp,
   HiTrendingUp, HiUserGroup, HiGift
@@ -57,7 +57,7 @@ export default function Dashboard() {
         </div>
         <div className="flex-1 text-left">
           <p className="text-xs font-semibold text-pink-300">ক্যাশ ক্যাশ</p>
-          <p className="text-[10px] text-white/40">নতুন ইউজারদের জন্য বোনাস ৫ টাকা</p>
+          <p className="text-[10px] text-white/40">নতুন ইউজারদের জন্য বোনাস ৳{coinsToBDT(settings.referralBonusNewUser)}</p>
         </div>
         <div className="text-white/20">›</div>
       </button>
@@ -108,11 +108,11 @@ export default function Dashboard() {
               <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full bg-white transition-all duration-700"
-                  style={{ width: `${Math.min(((user?.balance || 0) / 500) * 100, 100)}%` }}
+                  style={{ width: `${Math.min(((user?.balance || 0) / settings.minWithdraw) * 100, 100)}%` }}
                 />
               </div>
               <p className="text-[10px] text-white/60 mt-1">
-                {((user?.balance || 0) / 500 * 100).toFixed(0)}% উইথড্রালের জন্য
+                {((user?.balance || 0) / settings.minWithdraw * 100).toFixed(0)}% উইথড্রালের জন্য
               </p>
             </div>
             <button
@@ -199,7 +199,7 @@ export default function Dashboard() {
             </div>
             <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-semibold text-white">ভিডিও অ্যাড দেখুন</p>
-              <p className="text-[10px] text-white/40">+৳{coinsToBDT(10)} • {dailyWatchCount}/০ দেখেছেন</p>
+              <p className="text-[10px] text-white/40">+{settings.watchReward} কয়েন • {dailyWatchCount}/{settings.dailyWatchLimit} দেখেছেন</p>
             </div>
             <div className="px-4 py-2 rounded-xl bg-white/10 text-white font-semibold text-xs">
               শুরু
@@ -216,7 +216,7 @@ export default function Dashboard() {
             </div>
             <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-semibold text-white">প্রমোটার হিসেবে যোগ দিন</p>
-              <p className="text-[10px] text-white/40">+৳.০০/রেফার • আজীবন আয়</p>
+              <p className="text-[10px] text-white/40">+{settings.referralBonusReferrer} কয়েন/রেফার • আজীবন আয়</p>
             </div>
             <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-xs">
               যোগ দিন

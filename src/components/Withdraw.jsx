@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, push, set } from '../config/firebase';
-import { formatCoins, coinsToBDT, settings } from '../utils/helpers';
-import { HiCash, HiClock, HiCheckCircle, HiXCircle, HiArrowUp, HiStar, HiCreditCard, HiDeviceMobile } from 'react-icons/hi';
+import { formatCoins, coinsToBDT, settings, calcWithdrawAmount } from '../utils/helpers';
+import { HiCash, HiClock, HiCheckCircle, HiXCircle, HiArrowUp, HiStar, HiCreditCard, HiDeviceMobile, HiInformationCircle } from 'react-icons/hi';
 
 const methods = [
-  { id: 'telegram_stars', label: 'Telegram Stars', icon: HiStar },
-  { id: 'upi', label: 'UPI ID', icon: HiCreditCard },
   { id: 'bkash', label: 'bKash', icon: HiDeviceMobile },
+  { id: 'nagad', label: 'Nagad', icon: HiDeviceMobile },
+  { id: 'rocket', label: 'Rocket', icon: HiCreditCard },
 ];
 
 export default function Withdraw() {
@@ -21,6 +21,7 @@ export default function Withdraw() {
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   const canWithdraw = (user?.balance || 0) >= settings.minWithdraw;
+  const { fee, net, bdt } = calcWithdrawAmount(user?.balance || 0);
 
   useEffect(() => {
     if (user?.id) loadHistory();
@@ -64,6 +65,8 @@ export default function Withdraw() {
       await set(newRequestRef, {
         userId: user.id,
         amount: user.balance,
+        fee,
+        net,
         method,
         accountNo: accountNo.trim(),
         status: 'pending',
@@ -71,7 +74,7 @@ export default function Withdraw() {
         processedAt: null,
       });
 
-      toast.success('✅ উইথড্রল রিকোয়েস্ট জমা হয়েছে!');
+      toast.success('উইথড্রল রিকোয়েস্ট জমা হয়েছে!');
       setShowForm(false);
       setAccountNo('');
       await loadHistory();
@@ -110,13 +113,11 @@ export default function Withdraw() {
 
   return (
     <div className="pb-4 animate-fade-in">
-      {/* Header */}
       <div className="mb-4">
         <h1 className="text-lg font-bold text-white">উইথড্রল</h1>
         <p className="text-xs text-white/40 mt-0.5">আপনার কয়েন আসল টাকায় রূপান্তর করুন</p>
       </div>
 
-      {/* Balance Card */}
       <div className="relative overflow-hidden rounded-3xl p-6 mb-4 animate-slide-up stagger-1">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 via-orange-600/10 to-amber-600/20" />
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl" />
@@ -128,12 +129,15 @@ export default function Withdraw() {
           <p className="text-4xl font-black text-white mt-1">{formatCoins(user?.balance || 0)}</p>
           <p className="text-sm text-white/40 mt-0.5">≈ {coinsToBDT(user?.balance || 0)} BDT</p>
 
-          <div className="mt-4 flex items-center justify-center gap-2">
+          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
             <div className="glass rounded-full px-3 py-1">
               <span className="text-[10px] text-white/50">সর্বনিম্ন: {settings.minWithdraw} কয়েন</span>
             </div>
             <div className="glass rounded-full px-3 py-1">
-              <span className="text-[10px] text-white/50">১০ কয়েন = ৳১</span>
+              <span className="text-[10px] text-white/50">২০ কয়েন = ৳১</span>
+            </div>
+            <div className="glass rounded-full px-3 py-1">
+              <span className="text-[10px] text-white/50">ফি: ৫%</span>
             </div>
           </div>
 
@@ -160,12 +164,10 @@ export default function Withdraw() {
         </div>
       </div>
 
-      {/* Withdraw Form */}
       {showForm && (
         <div className="glass rounded-2xl p-5 mb-4 animate-slide-up stagger-2">
           <h3 className="font-semibold text-white mb-4">উইথড্রলের বিবরণ</h3>
 
-          {/* Method Selection */}
           <div className="mb-4">
             <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">পেমেন্ট মেথড</p>
             <div className="grid grid-cols-3 gap-2">
@@ -186,37 +188,37 @@ export default function Withdraw() {
             </div>
           </div>
 
-          {/* Account Input */}
           <div className="mb-4">
-            <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">অ্যাকাউন্টের বিবরণ</p>
+            <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">অ্যাকাউন্ট নম্বর</p>
             <input
               type="text"
               value={accountNo}
               onChange={(e) => setAccountNo(e.target.value)}
-              placeholder={
-                method === 'bkash'
-                  ? 'bKash নম্বর (01XXXXXXXXX)'
-                  : method === 'upi'
-                  ? 'UPI ID (example@upi)'
-                  : 'Telegram Username'
-              }
+              placeholder="01XXXXXXXXX"
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none transition-all"
             />
           </div>
 
-          {/* Summary */}
-          <div className="glass rounded-xl p-3 mb-4">
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-white/40">পরিমাণ</span>
+          <div className="glass rounded-xl p-3 mb-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-white/40">মোট ব্যালেন্স</span>
               <span className="text-white font-semibold">{formatCoins(user?.balance || 0)} কয়েন</span>
             </div>
             <div className="flex justify-between text-sm">
+              <span className="text-white/40">উইথড্রল ফি (৫%)</span>
+              <span className="text-red-400">-{fee} কয়েন</span>
+            </div>
+            <div className="border-t border-white/5 pt-2 flex justify-between text-sm">
               <span className="text-white/40">আপনি পাবেন</span>
-              <span className="text-amber-400 font-bold">৳{coinsToBDT(user?.balance || 0)}</span>
+              <span className="text-amber-400 font-bold">৳{bdt}</span>
             </div>
           </div>
 
-          {/* Actions */}
+          <div className="flex items-start gap-2 mb-4">
+            <HiInformationCircle className="text-amber-400 text-sm flex-shrink-0 mt-0.5" />
+            <p className="text-[10px] text-white/30">উইথড্রল প্রসেস হতে ২৪-৪৮ ঘন্টা সময় লাগতে পারে। ভুল অ্যাকাউন্ট নম্বর দিলে দায়ভার নিবেন না।</p>
+          </div>
+
           <div className="flex gap-2">
             <button
               onClick={() => setShowForm(false)}
@@ -243,7 +245,6 @@ export default function Withdraw() {
         </div>
       )}
 
-      {/* History */}
       <div className="glass rounded-2xl p-4 animate-slide-up stagger-3">
         <h3 className="font-semibold text-white mb-3">উইথড্রল ইতিহাস</h3>
         {loadingHistory ? (
@@ -266,14 +267,15 @@ export default function Withdraw() {
                 className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{formatCoins(req.amount)} কয়েন</p>
+                  <p className="text-sm font-semibold text-white">{formatCoins(req.net || req.amount)} কয়েন</p>
+                  <p className="text-xs text-white/40">ফি: -{req.fee || 0} কয়েন</p>
                   <p className="text-xs text-white/30">
                     {req.method === 'bkash' ? (
                       <span className="inline-flex items-center gap-1"><HiDeviceMobile className="text-sm" /> {req.accountNo}</span>
-                    ) : req.method === 'upi' ? (
-                      <span className="inline-flex items-center gap-1"><HiCreditCard className="text-sm" /> {req.accountNo}</span>
+                    ) : req.method === 'nagad' ? (
+                      <span className="inline-flex items-center gap-1"><HiDeviceMobile className="text-sm" /> {req.accountNo}</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1"><HiStar className="text-sm" /> {req.accountNo}</span>
+                      <span className="inline-flex items-center gap-1"><HiCreditCard className="text-sm" /> {req.accountNo}</span>
                     )}
                   </p>
                   <p className="text-[10px] text-white/20 mt-0.5">

@@ -6,13 +6,13 @@ import { addReward, settings, coinsToBDT } from '../utils/helpers';
 import { HiGift, HiFire, HiSparkles } from 'react-icons/hi';
 
 const STREAK_REWARDS = {
-  1: 30,
-  2: 30,
-  3: 40,
-  4: 40,
-  5: 50,
-  6: 50,
-  7: 100,
+  1: 10,
+  2: 10,
+  3: 15,
+  4: 15,
+  5: 20,
+  6: 20,
+  7: 50,
 };
 
 export default function DailyBonus() {

@@ -2,50 +2,51 @@ import { database, ref, get, update } from '../config/firebase';
 import { HiSpeakerphone, HiVideoCamera, HiCheck, HiShare, HiUser } from 'react-icons/hi';
 
 export const settings = {
-  minWithdraw: 500,
-  exchangeRate: 10,
-  dailyWatchLimit: 20,
-  watchReward: 10,
-  referralBonusReferrer: 100,
-  referralBonusNewUser: 50,
-  dailyBonusBase: 30,
+  minWithdraw: 1000,
+  exchangeRate: 20,
+  dailyWatchLimit: 30,
+  watchReward: 1,
+  referralBonusReferrer: 20,
+  referralBonusNewUser: 10,
+  dailyBonusBase: 10,
+  withdrawFee: 0.05,
 };
 
 export const TASKS = [
   {
     id: 'task_join_channel',
     title: 'Telegram চ্যানেল জয়েন করুন',
-    reward: 50,
+    reward: 20,
     icon: HiSpeakerphone,
-    description: 'আমাদের Telegram চ্যানেলে জয়েন করুন এবং ৫ কয়েন উপার্জন করুন!',
+    description: 'আমাদের Telegram চ্যানেলে জয়েন করুন এবং ২০ কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_adsgram',
-    title: 'AdsGram টাস্ক দেখুন',
-    reward: 100,
+    title: 'Monetag ভিডিও অ্যাড দেখুন',
+    reward: 30,
     icon: HiVideoCamera,
-    description: 'AdsGram এ একটি টাস্ক সম্পন্ন করুন এবং ১০০ কয়েন উপার্জন করুন!',
+    description: 'Monetag ভিডিও অ্যাড সম্পন্ন করুন এবং ৩০ কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_daily_checkin',
     title: 'দৈনিক চেক-ইন',
-    reward: 20,
+    reward: 10,
     icon: HiCheck,
-    description: 'প্রতিদিন চেক-ইন করুন এবং ২০ কয়েন উপার্জন করুন!',
+    description: 'প্রতিদিন চেক-ইন করুন এবং ১০ কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_share',
     title: '১ বন্ধুর সাথে শেয়ার করুন',
-    reward: 200,
+    reward: 50,
     icon: HiShare,
-    description: 'অ্যাপটি একজন বন্ধুর সাথে শেয়ার করুন এবং ২০০ কয়েন উপার্জন করুন!',
+    description: 'অ্যাপটি একজন বন্ধুর সাথে শেয়ার করুন এবং ৫০ কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_profile',
     title: 'প্রোফাইল সম্পূর্ণ করুন',
-    reward: 30,
+    reward: 15,
     icon: HiUser,
-    description: 'আপনার প্রোফাইল সম্পূর্ণ করুন এবং ৩০ কয়েন উপার্জন করুন!',
+    description: 'আপনার প্রোফাইল সম্পূর্ণ করুন এবং ১৫ কয়েন উপার্জন করুন!',
   },
 ];
 
@@ -55,6 +56,12 @@ export const formatCoins = (amount) => {
 
 export const coinsToBDT = (coins) => {
   return (coins / settings.exchangeRate).toFixed(2);
+};
+
+export const calcWithdrawAmount = (coins) => {
+  const fee = Math.round(coins * settings.withdrawFee);
+  const net = coins - fee;
+  return { fee, net, bdt: net / settings.exchangeRate };
 };
 
 export const getTodayStr = () => {

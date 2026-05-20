@@ -8,10 +8,8 @@ export default function Leaderboard() {
   const { user } = useAuth();
   const [topUsers, setTopUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     loadLeaderboard();
   }, []);
 
@@ -45,7 +43,7 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className="pb-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <button

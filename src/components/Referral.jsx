@@ -8,7 +8,6 @@ import { HiShare, HiUserGroup, HiLink, HiClipboard } from 'react-icons/hi';
 export default function Referral() {
   const { user, refreshUser } = useAuth();
   const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const referralLink = `https://t.me/kamaibd_bot/app?start=${user?.id || ''}`;
 
@@ -54,7 +53,7 @@ export default function Referral() {
   };
 
   return (
-    <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className="pb-4 animate-fade-in">
       {/* Header */}
       <div className="mb-4">
         <h1 className="text-lg font-bold text-white">রেফার করে আয় করুন</h1>

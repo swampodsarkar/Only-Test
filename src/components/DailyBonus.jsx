@@ -18,7 +18,6 @@ const STREAK_REWARDS = {
 export default function DailyBonus() {
   const { user, refreshUser } = useAuth();
   const [claiming, setClaiming] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const now = Date.now();
   const lastClaimed = user?.dailyBonusLastClaimed || 0;

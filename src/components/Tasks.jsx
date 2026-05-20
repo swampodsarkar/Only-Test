@@ -9,10 +9,8 @@ export default function Tasks() {
   const { user, refreshUser } = useAuth();
   const [loading, setLoading] = useState({});
   const [taskStates, setTaskStates] = useState({});
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     if (user?.id) loadTaskStates();
   }, [user?.id]);
 
@@ -120,7 +118,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className="pb-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>

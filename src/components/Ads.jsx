@@ -8,7 +8,6 @@ import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock } from 'react-icons
 export default function Ads() {
   const { user, refreshUser } = useAuth();
   const [watching, setWatching] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const today = getTodayStr();
   const dailyWatchCount = user?.lastWatchDate === today ? (user?.dailyWatchCount || 0) : 0;
@@ -67,7 +66,7 @@ export default function Ads() {
   };
 
   return (
-    <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className="pb-4 animate-fade-in">
       {/* Header */}
       <div className="mb-4">
         <h1 className="text-lg font-bold text-white">ভিডিও দেখে আয় করুন</h1>

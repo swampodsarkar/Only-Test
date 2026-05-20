@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCoins, coinsToBDT, getTodayStr } from '../utils/helpers';
@@ -11,19 +11,14 @@ import DailyBonus from './DailyBonus';
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
   const [showBdt, setShowBdt] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const today = getTodayStr();
   const todayEarned = user?.weeklyEarned?.[today] || 0;
   const dailyWatchCount = user?.lastWatchDate === today ? (user?.dailyWatchCount || 0) : 0;
 
   return (
-    <div className={`pb-24 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className="pb-24 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">

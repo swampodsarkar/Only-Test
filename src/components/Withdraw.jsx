@@ -19,12 +19,10 @@ export default function Withdraw() {
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
   const canWithdraw = (user?.balance || 0) >= settings.minWithdraw;
 
   useEffect(() => {
-    setMounted(true);
     if (user?.id) loadHistory();
   }, [user?.id]);
 
@@ -111,7 +109,7 @@ export default function Withdraw() {
   };
 
   return (
-    <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className="pb-4 animate-fade-in">
       {/* Header */}
       <div className="mb-4">
         <h1 className="text-lg font-bold text-white">উইথড্রল</h1>

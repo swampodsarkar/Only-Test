@@ -3,30 +3,42 @@ import { database, ref, get, set, update } from '../config/firebase';
 
 const AuthContext = createContext(null);
 
+const MOCK_USER = {
+  id: '999999999',
+  firstName: 'Test User',
+  username: 'test_user_dev',
+  lastName: '',
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isDevMode, setIsDevMode] = useState(false);
 
   useEffect(() => {
     const initTelegram = async () => {
       try {
         const tg = window.Telegram?.WebApp;
-        if (tg) {
+        if (tg && tg.initDataUnsafe?.user) {
           tg.ready();
           tg.expand();
-          const initData = tg.initDataUnsafe?.user;
-          if (initData) {
-            const telegramUser = {
-              id: String(initData.id),
-              firstName: initData.first_name || 'User',
-              username: initData.username || `user_${initData.id}`,
-              lastName: initData.last_name || '',
-            };
-            await findOrCreateUser(telegramUser);
-          }
+          const initData = tg.initDataUnsafe.user;
+          const telegramUser = {
+            id: String(initData.id),
+            firstName: initData.first_name || 'User',
+            username: initData.username || `user_${initData.id}`,
+            lastName: initData.last_name || '',
+          };
+          await findOrCreateUser(telegramUser);
+        } else {
+          console.log('Telegram WebApp not detected, using DEV mode');
+          setIsDevMode(true);
+          await findOrCreateUser(MOCK_USER);
         }
       } catch (err) {
         console.error('Telegram init error:', err);
+        setIsDevMode(true);
+        await findOrCreateUser(MOCK_USER);
       } finally {
         setLoading(false);
       }
@@ -97,7 +109,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser, setUser }}>
+    <AuthContext.Provider value={{ user, loading, refreshUser, setUser, isDevMode }}>
       {children}
     </AuthContext.Provider>
   );

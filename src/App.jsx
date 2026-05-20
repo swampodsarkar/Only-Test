@@ -6,12 +6,13 @@ import Tasks from './components/Tasks';
 import Ads from './components/Ads';
 import Withdraw from './components/Withdraw';
 import Referral from './components/Referral';
+import Leaderboard from './components/Leaderboard';
+import Support from './components/Support';
 import { HiSparkles } from 'react-icons/hi';
 
 function LoadingScreen() {
   return (
     <div className="min-h-screen bg-[#0f0b1a] flex items-center justify-center relative overflow-hidden">
-      {/* Background effects */}
       <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-violet-600/10 to-transparent" />
       <div className="absolute top-20 -left-20 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl animate-float" />
       <div className="absolute top-40 -right-20 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
@@ -72,6 +73,8 @@ function AppRoutes() {
         <Route path="/ads" element={<Ads />} />
         <Route path="/withdraw" element={<Withdraw />} />
         <Route path="/referral" element={<Referral />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/support" element={<Support />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

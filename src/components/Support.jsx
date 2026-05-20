@@ -4,7 +4,6 @@ import { HiArrowLeft, HiChat, HiMail, HiPhone, HiGlobe, HiQuestionMarkCircle } f
 
 export default function Support() {
   const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
 
   const supportChannels = [
     {
@@ -57,7 +56,7 @@ export default function Support() {
   ];
 
   return (
-    <div className={`pb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className="pb-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <button

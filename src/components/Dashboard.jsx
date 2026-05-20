@@ -134,7 +134,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-              <HiTrophy className="text-white text-lg" />
+              <HiSparkles className="text-white text-lg" />
             </div>
             <div>
               <p className="text-sm font-semibold text-white">টপ লিডারবোর্ড</p>

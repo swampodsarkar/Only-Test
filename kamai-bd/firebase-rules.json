@@ -1,0 +1,68 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid || auth.token.isAdmin === true",
+        ".write": "$uid === auth.uid || auth.token.isAdmin === true",
+        "balance": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "totalEarned": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "withdrawn": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "tasksCompleted": {
+          ".write": "$uid === auth.uid",
+          "$taskId": {
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        "dailyWatchCount": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20"
+        },
+        "dailyBonusStreak": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 7"
+        },
+        "$other": {
+          ".validate": "newData.isString() || newData.isNumber()"
+        }
+      }
+    },
+    "withdraw_requests": {
+      "$requestId": {
+        ".read": "auth.token.isAdmin === true || data.child('userId').val() === auth.uid",
+        ".write": "auth.token.isAdmin === true || (!data.exists() && newData.child('userId').val() === auth.uid)",
+        "status": {
+          ".validate": "newData.val() === 'pending' || newData.val() === 'approved' || newData.val() === 'rejected'"
+        },
+        "amount": {
+          ".validate": "newData.isNumber() && newData.val() >= 500"
+        },
+        "$other": {
+          ".validate": "newData.isString() || newData.isNumber()"
+        }
+      }
+    },
+    "settings": {
+      ".read": true,
+      ".write": "auth.token.isAdmin === true",
+      "minWithdraw": {
+        ".validate": "newData.isNumber() && newData.val() >= 100"
+      },
+      "exchangeRate": {
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      },
+      "dailyWatchLimit": {
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      },
+      "watchReward": {
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      },
+      "$other": {
+        ".validate": "newData.isNumber()"
+      }
+    }
+  }
+}

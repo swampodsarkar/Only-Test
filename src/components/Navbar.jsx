@@ -6,7 +6,7 @@ const navItems = [
   { path: '/tasks', label: 'কাজ', icon: HiClipboardCheck },
   { path: '/ads', label: 'আয়', icon: HiCurrencyDollar },
   { path: '/withdraw', label: 'ওয়ালেট', icon: HiCreditCard },
-  { path: '/referral', label: 'সাপোর্ট', icon: HiQuestionMarkCircle },
+  { path: '/support', label: 'সাপোর্ট', icon: HiQuestionMarkCircle },
 ];
 
 export default function Navbar() {

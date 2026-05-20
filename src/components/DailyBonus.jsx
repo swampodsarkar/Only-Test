@@ -140,7 +140,7 @@ export default function DailyBonus() {
           )}
           {streak >= 7 && (
             <p className="text-[10px] text-amber-400/50 mt-1">
-              🔥 Max streak! Resets after claiming.
+              <HiFire className="inline text-xs" /> Max streak! Resets after claiming.
             </p>
           )}
         </div>

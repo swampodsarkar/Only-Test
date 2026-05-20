@@ -1,4 +1,5 @@
 import { database, ref, get, update } from '../config/firebase';
+import { HiSpeakerphone, HiVideoCamera, HiCheck, HiShare, HiUser } from 'react-icons/hi';
 
 export const settings = {
   minWithdraw: 500,
@@ -15,35 +16,35 @@ export const TASKS = [
     id: 'task_join_channel',
     title: 'Telegram চ্যানেল জয়েন করুন',
     reward: 50,
-    icon: '📢',
+    icon: HiSpeakerphone,
     description: 'আমাদের Telegram চ্যানেলে জয়েন করুন এবং 50 কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_adsgram',
     title: 'AdsGram Task দেখুন',
     reward: 100,
-    icon: '📺',
+    icon: HiVideoCamera,
     description: 'AdsGram এ একটি টাস্ক সম্পন্ন করুন এবং 100 কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_daily_checkin',
     title: 'Daily Check-in',
     reward: 20,
-    icon: '✅',
+    icon: HiCheck,
     description: 'প্রতিদিন চেক-ইন করুন এবং 20 কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_share',
     title: 'Share App to 1 Friend',
     reward: 200,
-    icon: '📤',
+    icon: HiShare,
     description: 'অ্যাপটি একজন বন্ধুর সাথে শেয়ার করুন এবং 200 কয়েন উপার্জন করুন!',
   },
   {
     id: 'task_profile',
     title: 'Complete Profile',
     reward: 30,
-    icon: '👤',
+    icon: HiUser,
     description: 'আপনার প্রোফাইল সম্পূর্ণ করুন এবং 30 কয়েন উপার্জন করুন!',
   },
 ];

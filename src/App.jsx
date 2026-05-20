@@ -6,6 +6,7 @@ import Tasks from './components/Tasks';
 import Ads from './components/Ads';
 import Withdraw from './components/Withdraw';
 import Referral from './components/Referral';
+import { HiSparkles } from 'react-icons/hi';
 
 function LoadingScreen() {
   return (
@@ -17,7 +18,7 @@ function LoadingScreen() {
 
       <div className="text-center relative z-10 animate-scale-in">
         <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center animate-pulse-glow">
-          <span className="text-4xl">🚀</span>
+          <HiSparkles className="text-4xl text-violet-400" />
         </div>
         <h1 className="text-2xl font-bold gradient-text mb-2">Kamai BD</h1>
         <p className="text-sm text-white/30 mb-4">Loading your dashboard...</p>
@@ -46,7 +47,7 @@ function AppRoutes() {
 
         <div className="text-center max-w-sm relative z-10 animate-scale-in">
           <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center">
-            <span className="text-4xl">🚀</span>
+            <HiSparkles className="text-4xl text-violet-400" />
           </div>
           <h1 className="text-2xl font-bold gradient-text mb-2">Kamai BD</h1>
           <p className="text-white/40 text-sm mb-6">

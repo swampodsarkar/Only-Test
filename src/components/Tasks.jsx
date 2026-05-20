@@ -162,12 +162,16 @@ export default function Tasks() {
 
               <div className="relative p-4 flex items-center gap-3">
                 {/* Icon */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 ${
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
                   completed
                     ? 'bg-emerald-500/20'
                     : 'bg-gradient-to-br from-violet-500/20 to-indigo-500/20'
                 }`}>
-                  {completed ? '✅' : task.icon}
+                  {completed ? (
+                    <HiCheckCircle className="text-emerald-400 text-xl" />
+                  ) : (
+                    <task.icon className="text-violet-400 text-xl" />
+                  )}
                 </div>
 
                 {/* Info */}

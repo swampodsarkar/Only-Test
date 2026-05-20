@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCoins, coinsToBDT, getTodayStr } from '../utils/helpers';
-import { HiCurrencyDollar, HiTrendingUp, HiClock, HiEye } from 'react-icons/hi';
+import { HiCurrencyDollar, HiTrendingUp, HiClock, HiEye, HiVideoCamera, HiCheckCircle, HiUserGroup, HiCash } from 'react-icons/hi';
 import DailyBonus from './DailyBonus';
 
 export default function Dashboard() {
@@ -24,7 +24,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-2">
         <div>
           <p className="text-xs text-dark-400 uppercase tracking-wider">Welcome back</p>
-          <h1 className="text-xl font-bold text-white">{user?.firstName || 'User'} 👋</h1>
+          <h1 className="text-xl font-bold text-white">{user?.firstName || 'User'}</h1>
         </div>
         <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-sm">
           {(user?.firstName || 'U').charAt(0).toUpperCase()}
@@ -131,16 +131,16 @@ export default function Dashboard() {
         <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">Quick Actions</p>
         <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: '📺', label: 'Watch Ads', color: 'bg-blue-500/10' },
-            { icon: '✅', label: 'Tasks', color: 'bg-green-500/10' },
-            { icon: '👥', label: 'Refer', color: 'bg-purple-500/10' },
-            { icon: '💰', label: 'Withdraw', color: 'bg-amber-500/10' },
+            { icon: HiVideoCamera, label: 'Watch Ads', color: 'bg-blue-500/10' },
+            { icon: HiCheckCircle, label: 'Tasks', color: 'bg-green-500/10' },
+            { icon: HiUserGroup, label: 'Refer', color: 'bg-purple-500/10' },
+            { icon: HiCash, label: 'Withdraw', color: 'bg-amber-500/10' },
           ].map((action) => (
             <button
               key={action.label}
               className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all active:scale-95"
             >
-              <span className="text-xl">{action.icon}</span>
+              <action.icon className="text-xl text-white/70" />
               <span className="text-[10px] text-white/60">{action.label}</span>
             </button>
           ))}

@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { HiBeaker } from 'react-icons/hi';
 import Navbar from './Navbar';
 import Toast from './Toast';
 
@@ -25,7 +26,7 @@ export default function Layout() {
       {/* Dev Mode Banner */}
       {isDevMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] bg-amber-500/90 backdrop-blur-sm text-center py-1.5 text-xs font-bold text-black">
-          🧪 DEV MODE — Testing without Telegram
+          <HiBeaker className="inline text-sm mr-1" /> DEV MODE — Testing without Telegram
         </div>
       )}
 

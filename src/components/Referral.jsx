@@ -69,7 +69,9 @@ export default function Referral() {
         <div className="absolute inset-0 bg-grid opacity-20" />
 
         <div className="relative z-10 text-center">
-          <div className="text-5xl mb-3 animate-bounce-subtle">👥</div>
+          <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center animate-bounce-subtle">
+            <HiUserGroup className="text-3xl text-purple-400" />
+          </div>
           <h2 className="text-lg font-bold text-white mb-1">Invite Friends</h2>
           <p className="text-sm text-white/50 mb-4">Both you and your friend earn bonus coins!</p>
 

@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, update } from '../config/firebase';
 import { settings, getTodayStr, addReward } from '../utils/helpers';
-import { HiPlay, HiInformationCircle, HiClock } from 'react-icons/hi';
+import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock } from 'react-icons/hi';
 
 export default function Ads() {
   const { user, refreshUser } = useAuth();
@@ -85,7 +85,7 @@ export default function Ads() {
         {/* Content */}
         <div className="relative z-10 text-center">
           <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center animate-pulse-glow">
-            <span className="text-4xl">📺</span>
+            <HiVideoCamera className="text-4xl text-white/80" />
           </div>
 
           <h2 className="text-lg font-bold text-white mb-1">Rewarded Videos</h2>

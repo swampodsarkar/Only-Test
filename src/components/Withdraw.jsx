@@ -3,12 +3,12 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, push, set } from '../config/firebase';
 import { formatCoins, coinsToBDT, settings } from '../utils/helpers';
-import { HiCash, HiClock, HiCheckCircle, HiXCircle, HiArrowUp } from 'react-icons/hi';
+import { HiCash, HiClock, HiCheckCircle, HiXCircle, HiArrowUp, HiStar, HiCreditCard, HiDeviceMobile } from 'react-icons/hi';
 
 const methods = [
-  { id: 'telegram_stars', label: 'Telegram Stars', icon: '⭐' },
-  { id: 'upi', label: 'UPI ID', icon: '💳' },
-  { id: 'bkash', label: 'bKash', icon: '📱' },
+  { id: 'telegram_stars', label: 'Telegram Stars', icon: HiStar },
+  { id: 'upi', label: 'UPI ID', icon: HiCreditCard },
+  { id: 'bkash', label: 'bKash', icon: HiDeviceMobile },
 ];
 
 export default function Withdraw() {
@@ -181,7 +181,7 @@ export default function Withdraw() {
                       : 'bg-white/5 border border-white/10 hover:border-white/20'
                   }`}
                 >
-                  <span className="text-2xl">{m.icon}</span>
+                  <m.icon className="text-2xl mx-auto text-white/80" />
                   <p className="text-[10px] mt-1 text-white/60">{m.label}</p>
                 </button>
               ))}
@@ -257,7 +257,7 @@ export default function Withdraw() {
           </div>
         ) : history.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-3xl mb-2">💸</p>
+            <HiCash className="text-3xl text-white/20 mx-auto mb-2" />
             <p className="text-sm text-white/30">No withdrawal history</p>
           </div>
         ) : (
@@ -270,7 +270,13 @@ export default function Withdraw() {
                 <div>
                   <p className="text-sm font-semibold text-white">{formatCoins(req.amount)} coins</p>
                   <p className="text-xs text-white/30">
-                    {req.method === 'bkash' ? '📱' : req.method === 'upi' ? '💳' : '⭐'} {req.accountNo}
+                    {req.method === 'bkash' ? (
+                      <span className="inline-flex items-center gap-1"><HiDeviceMobile className="text-sm" /> {req.accountNo}</span>
+                    ) : req.method === 'upi' ? (
+                      <span className="inline-flex items-center gap-1"><HiCreditCard className="text-sm" /> {req.accountNo}</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1"><HiStar className="text-sm" /> {req.accountNo}</span>
+                    )}
                   </p>
                   <p className="text-[10px] text-white/20 mt-0.5">
                     {new Date(req.requestedAt).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' })}

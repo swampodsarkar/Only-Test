@@ -2,8 +2,8 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { settings, getTodayStr, coinsToBDT } from '../utils/helpers';
-import { loadMonitagSDK, showRewardedAd, createAdSession as createMonetagSession, verifyWithServer as verifyMonetag } from '../utils/monitag';
-import { loadAdsGramSDK, showAdsGramReward, createAdSession as createAdsGramSession, verifyWithServer as verifyAdsGram } from '../utils/adsgram';
+import { loadMonitagSDK, showRewardedAd, verifyWithServer as verifyMonetag } from '../utils/monitag';
+import { loadAdsGramSDK, showAdsGramReward, verifyWithServer as verifyAdsGram } from '../utils/adsgram';
 import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck, HiSparkles } from 'react-icons/hi';
 
 const PROVIDERS = [
@@ -32,10 +32,7 @@ export default function Ads() {
     toast.loading(`${provider === 'monetag' ? 'Monetag' : 'AdsGram'} ভিডিও লোড হচ্ছে...`);
 
     try {
-      const createSession = provider === 'monetag' ? createMonetagSession : createAdsGramSession;
       const verifyServer = provider === 'monetag' ? verifyMonetag : verifyAdsGram;
-
-      const adSessionId = await createSession(user.id);
 
       if (provider === 'monetag') {
         if (!sdkReady.monetag) {
@@ -54,7 +51,7 @@ export default function Ads() {
       toast.dismiss();
       toast.loading('সার্ভার ভেরিফিকেশন চলছে...');
 
-      await verifyServer(adSessionId, user.id);
+      await verifyServer(user.id);
       await refreshUser();
 
       toast.dismiss();

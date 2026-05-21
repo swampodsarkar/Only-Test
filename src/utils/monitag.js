@@ -1,4 +1,4 @@
-import { database, ref, push, set, serverTimestamp } from '../config/firebase';
+import { database, ref, push, serverTimestamp } from '../config/firebase';
 
 const MONITAG_PUBLISHER_ID = '52975';
 const MONITAG_SCRIPT = `https://cdn.monitag.com/sdk.js?p=${MONITAG_PUBLISHER_ID}`;
@@ -51,24 +51,11 @@ export const showRewardedAd = () => {
   });
 };
 
-export const createAdSession = async (userId) => {
-  const adSessionId = `${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  const sessionRef = ref(database, `ad_sessions/${adSessionId}`);
-  await set(sessionRef, {
-    userId,
-    status: 'pending',
-    provider: 'monetag',
-    createdAt: Date.now(),
-    date: new Date().toISOString().split('T')[0],
-  });
-  return adSessionId;
-};
-
-export const verifyWithServer = async (adSessionId, userId) => {
+export const verifyWithServer = async (userId) => {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ adSessionId, userId, provider: 'monetag' }),
+    body: JSON.stringify({ userId, provider: 'monetag' }),
   });
   if (!response.ok) {
     const err = await response.json();

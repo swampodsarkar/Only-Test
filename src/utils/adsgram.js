@@ -1,4 +1,4 @@
-import { database, ref, push, set, serverTimestamp } from '../config/firebase';
+import { database, ref, push, serverTimestamp } from '../config/firebase';
 
 const ADSGRAM_SCRIPT = 'https://sad.adsgram.ai/js/sad.min.js';
 const API_URL = '/api/verify-ad';
@@ -39,35 +39,22 @@ export const initAdsGram = (blockId) => {
   return cachedController;
 };
 
-export const createAdSession = async (userId) => {
-  const adSessionId = `${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  const sessionRef = ref(database, `ad_sessions/${adSessionId}`);
-  await set(sessionRef, {
-    userId,
-    status: 'pending',
-    provider: 'adsgram',
-    createdAt: Date.now(),
-    date: new Date().toISOString().split('T')[0],
-  });
-  return adSessionId;
+export const showAdsGramReward = (blockId) => {
+  const controller = initAdsGram(blockId);
+  return controller.show();
 };
 
-export const verifyWithServer = async (adSessionId, userId) => {
+export const verifyWithServer = async (userId) => {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ adSessionId, userId, provider: 'adsgram' }),
+    body: JSON.stringify({ userId, provider: 'adsgram' }),
   });
   if (!response.ok) {
     const err = await response.json();
     throw new Error(err.error || 'Server verification failed');
   }
   return response.json();
-};
-
-export const showAdsGramReward = (blockId) => {
-  const controller = initAdsGram(blockId);
-  return controller.show();
 };
 
 export const logAdsGramImpression = async (userId, status, reward) => {

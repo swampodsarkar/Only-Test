@@ -4,96 +4,94 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.database();
 
-const SECRET_TOKEN = functions.config().webhook?.secret || 'kamai-bd-webhook-secret-dev';
+const validateSession = async (sessionId, userId) => {
+  const sessionRef = db.ref(`ad_sessions/${sessionId}`);
+  const sessionSnap = await sessionRef.once('value');
 
-const verifySignature = (req) => {
-  const signature = req.headers['x-adsgram-signature'] || req.headers['x-monetag-signature'] || '';
-  const timestamp = req.headers['x-timestamp'] || '';
-  const body = JSON.stringify(req.body);
-  const crypto = require('crypto');
-  const expected = crypto.createHmac('sha256', SECRET_TOKEN)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
-  return signature === expected;
+  if (!sessionSnap.exists()) {
+    throw new Error('Session not found');
+  }
+
+  const session = sessionSnap.val();
+
+  if (session.status !== 'pending') {
+    throw new Error('Session already processed');
+  }
+
+  if (session.userId !== userId) {
+    throw new Error('User mismatch');
+  }
+
+  const age = Date.now() - session.createdAt;
+  if (age > 5 * 60 * 1000) {
+    throw new Error('Session expired');
+  }
+
+  return session;
 };
 
-const validateRequest = (req) => {
-  if (!req.body || !req.body.userId) {
-    throw new Error('Missing userId');
+const creditUser = async (userId, reward) => {
+  const userRef = db.ref(`users/${userId}`);
+  const userSnap = await userRef.once('value');
+  const userData = userSnap.val() || {};
+
+  const today = new Date().toISOString().split('T')[0];
+  const amount = reward || 1;
+
+  const updates = {};
+
+  if (userData.lastWatchDate === today) {
+    updates[`users/${userId}/dailyWatchCount`] = (userData.dailyWatchCount || 0) + 1;
+  } else {
+    updates[`users/${userId}/dailyWatchCount`] = 1;
+    updates[`users/${userId}/lastWatchDate`] = today;
   }
-  if (!req.body.adSessionId) {
-    throw new Error('Missing adSessionId');
-  }
+
+  updates[`users/${userId}/balance`] = (userData.balance || 0) + amount;
+  updates[`users/${userId}/totalEarned`] = (userData.totalEarned || 0) + amount;
+  updates[`users/${userId}/lastActiveAt`] = Date.now();
+
+  await db.ref().update(updates);
+  return { userId, amount };
 };
 
 exports.adsgramWebhook = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
-    validateRequest(req);
-    const { userId, adSessionId, reward, provider } = req.body;
+    let userId, adSessionId, reward;
 
-    const sessionRef = db.ref(`ad_sessions/${adSessionId}`);
-    const sessionSnap = await sessionRef.once('value');
-
-    if (!sessionSnap.exists()) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-
-    const session = sessionSnap.val();
-
-    if (session.status === 'verified') {
-      return res.status(200).json({ status: 'already_verified' });
-    }
-
-    if (session.status !== 'pending') {
-      return res.status(400).json({ error: 'Invalid session status' });
-    }
-
-    if (session.userId !== userId) {
-      return res.status(403).json({ error: 'User mismatch' });
-    }
-
-    const updates = {};
-
-    const userRef = db.ref(`users/${userId}`);
-    const userSnap = await userRef.once('value');
-    const userData = userSnap.val() || {};
-
-    const today = new Date().toISOString().split('T')[0];
-    const amount = reward || 1;
-
-    if (userData.lastWatchDate === today) {
-      updates[`users/${userId}/dailyWatchCount`] = (userData.dailyWatchCount || 0) + 1;
+    if (req.method === 'GET') {
+      userId = req.query.userId;
+      adSessionId = req.query.adSessionId;
+      reward = parseInt(req.query.reward) || 1;
+    } else if (req.method === 'POST') {
+      userId = req.body.userId;
+      adSessionId = req.body.adSessionId;
+      reward = req.body.reward || 1;
     } else {
-      updates[`users/${userId}/dailyWatchCount`] = 1;
-      updates[`users/${userId}/lastWatchDate`] = today;
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const weeklyKey = `weeklyEarned/${today}`;
-    updates[`users/${userId}/${weeklyKey}`] = (userData.weeklyEarned?.[today] || 0) + amount;
-    updates[`users/${userId}/balance`] = (userData.balance || 0) + amount;
-    updates[`users/${userId}/totalEarned`] = (userData.totalEarned || 0) + amount;
-    updates[`users/${userId}/lastActiveAt`] = Date.now();
+    if (!userId) {
+      return res.status(200).send('OK');
+    }
 
-    updates[`ad_sessions/${adSessionId}/status`] = 'verified';
-    updates[`ad_sessions/${adSessionId}/verifiedAt`] = Date.now();
-    updates[`ad_sessions/${adSessionId}/provider`] = provider || 'unknown';
+    if (adSessionId) {
+      await validateSession(adSessionId, userId);
+    }
 
-    await db.ref().update(updates);
+    const result = await creditUser(userId, reward);
 
-    return res.status(200).json({
-      status: 'verified',
-      userId,
-      amount,
-    });
+    if (adSessionId) {
+      await db.ref(`ad_sessions/${adSessionId}/status`).set('verified');
+      await db.ref(`ad_sessions/${adSessionId}/verifiedAt`).set(Date.now());
+    }
+
+    return res.status(200).json({ status: 'verified', ...result });
 
   } catch (err) {
-    console.error('Webhook error:', err);
+    console.error('AdsGram webhook error:', err);
     return res.status(400).json({ error: err.message });
   }
 });
@@ -101,64 +99,25 @@ exports.adsgramWebhook = functions.https.onRequest(async (req, res) => {
 exports.monetagWebhook = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
-    validateRequest(req);
     const { userId, adSessionId, reward } = req.body;
 
-    const sessionRef = db.ref(`ad_sessions/${adSessionId}`);
-    const sessionSnap = await sessionRef.once('value');
-
-    if (!sessionSnap.exists()) {
-      return res.status(404).json({ error: 'Session not found' });
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing userId' });
     }
 
-    const session = sessionSnap.val();
-
-    if (session.status === 'verified') {
-      return res.status(200).json({ status: 'already_verified' });
+    if (adSessionId) {
+      await validateSession(adSessionId, userId);
     }
 
-    if (session.status !== 'pending') {
-      return res.status(400).json({ error: 'Invalid session status' });
+    const result = await creditUser(userId, reward || 1);
+
+    if (adSessionId) {
+      await db.ref(`ad_sessions/${adSessionId}/status`).set('verified');
+      await db.ref(`ad_sessions/${adSessionId}/verifiedAt`).set(Date.now());
     }
 
-    if (session.userId !== userId) {
-      return res.status(403).json({ error: 'User mismatch' });
-    }
-
-    await sessionRef.update({ status: 'verified', verifiedAt: Date.now() });
-
-    const userRef = db.ref(`users/${userId}`);
-    const userSnap = await userRef.once('value');
-    const userData = userSnap.val() || {};
-
-    const today = new Date().toISOString().split('T')[0];
-    const amount = reward || 1;
-
-    const updates = {};
-
-    if (userData.lastWatchDate === today) {
-      updates.dailyWatchCount = (userData.dailyWatchCount || 0) + 1;
-    } else {
-      updates.dailyWatchCount = 1;
-      updates.lastWatchDate = today;
-    }
-
-    updates.balance = (userData.balance || 0) + amount;
-    updates.totalEarned = (userData.totalEarned || 0) + amount;
-    updates.lastActiveAt = Date.now();
-
-    await userRef.update(updates);
-
-    return res.status(200).json({
-      status: 'verified',
-      userId,
-      amount,
-    });
+    return res.status(200).json({ status: 'verified', ...result });
 
   } catch (err) {
     console.error('Monetag webhook error:', err);

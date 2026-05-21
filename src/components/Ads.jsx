@@ -5,7 +5,7 @@ import { database, ref, get, update } from '../config/firebase';
 import { settings, getTodayStr, addReward, coinsToBDT } from '../utils/helpers';
 import { loadMonitagSDK, showRewardedAd, logAdImpression } from '../utils/monitag';
 import { loadAdsGramSDK, showAdsGramReward, logAdsGramImpression } from '../utils/adsgram';
-import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck, HiSparkles } from 'react-icons/hi';
+import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck, HiSparkles, HiRefresh } from 'react-icons/hi';
 
 const PROVIDERS = [
   { id: 'monetag', label: 'Monetag', icon: HiShieldCheck, color: 'from-violet-500 to-indigo-500' },
@@ -81,19 +81,7 @@ export default function Ads() {
       }
     } catch (err) {
       toast.dismiss();
-      const confirmed = window.confirm(`${provider === 'monetag' ? 'Monetag' : 'AdsGram'} অ্যাড দেখেছেন?`);
-      if (confirmed) {
-        await rewardAfterAd();
-        if (provider === 'monetag') {
-          await logAdImpression(user.id, 'manual_verify', settings.watchReward);
-        } else {
-          await logAdsGramImpression(user.id, 'manual_verify', settings.watchReward);
-        }
-        toast.success(`+${settings.watchReward} কয়েন অর্জন করেছেন!`);
-        setWatching(false);
-        return;
-      }
-      toast.error('অ্যাড শেষ পর্যন্ত দেখুন');
+      toast.error('অ্যাড লোড করতে ব্যর্থ। আবার চেষ্টা করুন');
     } finally {
       setWatching(false);
     }

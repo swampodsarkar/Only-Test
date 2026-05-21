@@ -1,6 +1,6 @@
 import { database, ref, push, serverTimestamp } from '../config/firebase';
 
-const MONITAG_PUBLISHER_ID = 'YOUR_PUBLISHER_ID_HERE';
+const MONITAG_PUBLISHER_ID = '52975';
 const MONITAG_SCRIPT = `https://cdn.monitag.com/sdk.js?p=${MONITAG_PUBLISHER_ID}`;
 
 let sdkLoaded = false;

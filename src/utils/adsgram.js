@@ -39,7 +39,7 @@ export const showAdsGramReward = (blockId) => {
 
     try {
       const controller = new window.AdsGram({
-        blockId: blockId || 'YOUR_BLOCK_ID',
+        blockId: blockId || '30739',
         type: 'reward',
         onReward: () => resolve('rewarded'),
         onError: (err) => reject(err || new Error('AdsGram error')),

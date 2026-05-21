@@ -1,7 +1,7 @@
 import { database, ref, push, set, serverTimestamp } from '../config/firebase';
 
 const ADSGRAM_SCRIPT = 'https://sad.adsgram.ai/js/sad.min.js';
-const CLOUD_FUNCTION_URL = 'https://us-central1-gen-z-airdrop.cloudfunctions.net/adsgramWebhook';
+const API_URL = '/api/verify-ad';
 
 let sdkLoaded = false;
 let loadCallbacks = [];
@@ -53,7 +53,7 @@ export const createAdSession = async (userId) => {
 };
 
 export const verifyWithServer = async (adSessionId, userId) => {
-  const response = await fetch(CLOUD_FUNCTION_URL, {
+  const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ adSessionId, userId, provider: 'adsgram' }),

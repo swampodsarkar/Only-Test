@@ -2,7 +2,7 @@ import { database, ref, push, set, serverTimestamp } from '../config/firebase';
 
 const MONITAG_PUBLISHER_ID = '52975';
 const MONITAG_SCRIPT = `https://cdn.monitag.com/sdk.js?p=${MONITAG_PUBLISHER_ID}`;
-const CLOUD_FUNCTION_URL = 'https://us-central1-gen-z-airdrop.cloudfunctions.net/monetagWebhook';
+const API_URL = '/api/verify-ad';
 
 let sdkLoaded = false;
 let loadCallbacks = [];
@@ -65,7 +65,7 @@ export const createAdSession = async (userId) => {
 };
 
 export const verifyWithServer = async (adSessionId, userId) => {
-  const response = await fetch(CLOUD_FUNCTION_URL, {
+  const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ adSessionId, userId, provider: 'monetag' }),

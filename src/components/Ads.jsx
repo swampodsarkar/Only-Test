@@ -4,118 +4,139 @@ import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, update } from '../config/firebase';
 import { settings, getTodayStr, addReward, coinsToBDT } from '../utils/helpers';
 import { loadMonitagSDK, showRewardedAd, logAdImpression } from '../utils/monitag';
-import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck } from 'react-icons/hi';
+import { loadAdsGramSDK, showAdsGramReward, logAdsGramImpression } from '../utils/adsgram';
+import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck, HiSparkles } from 'react-icons/hi';
+
+const PROVIDERS = [
+  { id: 'monetag', label: 'Monetag', icon: HiShieldCheck, color: 'from-violet-500 to-indigo-500' },
+  { id: 'adsgram', label: 'AdsGram', icon: HiSparkles, color: 'from-emerald-500 to-teal-500' },
+];
 
 export default function Ads() {
   const { user, refreshUser } = useAuth();
   const [watching, setWatching] = useState(false);
-  const [sdkReady, setSdkReady] = useState(false);
+  const [provider, setProvider] = useState('monetag');
+  const [sdkReady, setSdkReady] = useState({ monetag: false, adsgram: false });
 
   const today = getTodayStr();
   const dailyWatchCount = user?.lastWatchDate === today ? (user?.dailyWatchCount || 0) : 0;
   const watchLimitReached = dailyWatchCount >= settings.dailyWatchLimit;
   const watchPercent = (dailyWatchCount / settings.dailyWatchLimit) * 100;
 
+  const rewardAfterAd = async () => {
+    const userRef = ref(database, `users/${user.id}`);
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const updates = {};
+      if (data.lastWatchDate === today) {
+        updates['users/' + user.id + '/dailyWatchCount'] = (data.dailyWatchCount || 0) + 1;
+      } else {
+        updates['users/' + user.id + '/dailyWatchCount'] = 1;
+        updates['users/' + user.id + '/lastWatchDate'] = today;
+      }
+      const weeklyKey = `weeklyEarned/${today}`;
+      updates['users/' + user.id + '/' + weeklyKey] = (data.weeklyEarned?.[today] || 0) + settings.watchReward;
+      await addReward(user.id, settings.watchReward);
+      await update(ref(database), updates);
+      await refreshUser();
+    }
+  };
+
+  const handleMonetag = async () => {
+    if (!sdkReady.monetag) {
+      await loadMonitagSDK();
+      setSdkReady(prev => ({ ...prev, monetag: true }));
+    }
+    await showRewardedAd();
+    await rewardAfterAd();
+    await logAdImpression(user.id, 'completed', settings.watchReward);
+    toast.success(`Monetag: +${settings.watchReward} কয়েন অর্জন করেছেন!`);
+  };
+
+  const handleAdsGram = async () => {
+    if (!sdkReady.adsgram) {
+      await loadAdsGramSDK();
+      setSdkReady(prev => ({ ...prev, adsgram: true }));
+    }
+    await showAdsGramReward();
+    await rewardAfterAd();
+    await logAdsGramImpression(user.id, 'completed', settings.watchReward);
+    toast.success(`AdsGram: +${settings.watchReward} কয়েন অর্জন করেছেন!`);
+  };
+
   const handleWatchAd = async () => {
     if (watchLimitReached) {
       toast.error(`দৈনিক লিমিট পূর্ণ! (${settings.dailyWatchLimit}/${settings.dailyWatchLimit})`);
       return;
     }
-
     setWatching(true);
-    toast.loading('Monetag ভিডিও লোড হচ্ছে...');
+    toast.loading(`${provider === 'monetag' ? 'Monetag' : 'AdsGram'} ভিডিও লোড হচ্ছে...`);
 
     try {
-      if (!sdkReady) {
-        await loadMonitagSDK();
-        setSdkReady(true);
-      }
-
-      await showRewardedAd();
-      toast.dismiss();
-
-      const userRef = ref(database, `users/${user.id}`);
-      const snapshot = await get(userRef);
-
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const updates = {};
-
-        if (data.lastWatchDate === today) {
-          updates['users/' + user.id + '/dailyWatchCount'] = (data.dailyWatchCount || 0) + 1;
-        } else {
-          updates['users/' + user.id + '/dailyWatchCount'] = 1;
-          updates['users/' + user.id + '/lastWatchDate'] = today;
-        }
-
-        const weeklyKey = `weeklyEarned/${today}`;
-        updates['users/' + user.id + '/' + weeklyKey] = (data.weeklyEarned?.[today] || 0) + settings.watchReward;
-
-        await addReward(user.id, settings.watchReward);
-        await update(ref(database), updates);
-        await refreshUser();
-        await logAdImpression(user.id, 'completed', settings.watchReward);
-
-        toast.success(`Monetag: +${settings.watchReward} কয়েন অর্জন করেছেন!`);
+      if (provider === 'monetag') {
+        await handleMonetag();
+      } else {
+        await handleAdsGram();
       }
     } catch (err) {
       toast.dismiss();
-
-      if (err.message === 'Ad dismissed') {
-        toast.error('ভিডিওটি শেষ পর্যন্ত দেখুন');
-      } else if (err.message === 'Monetag SDK not loaded') {
-        toast.error('অ্যাড লোড করতে ব্যর্থ। আবার চেষ্টা করুন');
-      } else {
-        const confirmed = window.confirm('অ্যাড দেখেছেন?');
-        if (confirmed) {
-          const userRef = ref(database, `users/${user.id}`);
-          const snapshot = await get(userRef);
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            const updates = {};
-            if (data.lastWatchDate === today) {
-              updates['users/' + user.id + '/dailyWatchCount'] = (data.dailyWatchCount || 0) + 1;
-            } else {
-              updates['users/' + user.id + '/dailyWatchCount'] = 1;
-              updates['users/' + user.id + '/lastWatchDate'] = today;
-            }
-            const weeklyKey = `weeklyEarned/${today}`;
-            updates['users/' + user.id + '/' + weeklyKey] = (data.weeklyEarned?.[today] || 0) + settings.watchReward;
-            await addReward(user.id, settings.watchReward);
-            await update(ref(database), updates);
-            await refreshUser();
-            await logAdImpression(user.id, 'manual_verify', settings.watchReward);
-            toast.success(`+${settings.watchReward} কয়েন অর্জন করেছেন!`);
-            setWatching(false);
-            return;
-          }
+      const confirmed = window.confirm(`${provider === 'monetag' ? 'Monetag' : 'AdsGram'} অ্যাড দেখেছেন?`);
+      if (confirmed) {
+        await rewardAfterAd();
+        if (provider === 'monetag') {
+          await logAdImpression(user.id, 'manual_verify', settings.watchReward);
+        } else {
+          await logAdsGramImpression(user.id, 'manual_verify', settings.watchReward);
         }
-        toast.error('অ্যাড প্রসেস করতে ব্যর্থ');
+        toast.success(`+${settings.watchReward} কয়েন অর্জন করেছেন!`);
+        setWatching(false);
+        return;
       }
+      toast.error('অ্যাড শেষ পর্যন্ত দেখুন');
     } finally {
       setWatching(false);
     }
   };
 
+  const currentProvider = PROVIDERS.find(p => p.id === provider);
+
   return (
     <div className="pb-4 animate-fade-in">
       <div className="mb-4">
         <h1 className="text-lg font-bold text-white">ভিডিও দেখে আয় করুন</h1>
-        <p className="text-xs text-white/40 mt-0.5">Monetag ভিডিও দেখে তাৎক্ষণিক কয়েন অর্জন করুন</p>
+        <p className="text-xs text-white/40 mt-0.5">ভিডিও দেখে তাৎক্ষণিক কয়েন অর্জন করুন</p>
+      </div>
+
+      {/* Provider Toggle */}
+      <div className="glass rounded-2xl p-1.5 mb-4 flex animate-slide-up stagger-1">
+        {PROVIDERS.map(p => (
+          <button
+            key={p.id}
+            onClick={() => setProvider(p.id)}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
+              provider === p.id
+                ? 'bg-gradient-to-r ' + p.color + ' text-white shadow-lg'
+                : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            <p.icon className="text-sm" />
+            {p.label}
+          </button>
+        ))}
       </div>
 
       <div className="relative overflow-hidden rounded-3xl p-6 mb-4 animate-slide-up stagger-1">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 via-indigo-600/10 to-violet-600/20" />
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-violet-500/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl" />
+        <div className={`absolute inset-0 bg-gradient-to-br ${provider === 'monetag' ? 'from-violet-600/20 via-indigo-600/10 to-violet-600/20' : 'from-emerald-600/20 via-teal-600/10 to-emerald-600/20'}`} />
+        <div className={`absolute -top-20 -right-20 w-40 h-40 ${provider === 'monetag' ? 'bg-violet-500/20' : 'bg-emerald-500/20'} rounded-full blur-3xl`} />
         <div className="absolute inset-0 bg-grid opacity-20" />
 
         <div className="relative z-10 text-center">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-violet-500/30 to-indigo-500/30 flex items-center justify-center animate-pulse-glow">
+          <div className={`w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br ${provider === 'monetag' ? 'from-violet-500/30 to-indigo-500/30' : 'from-emerald-500/30 to-teal-500/30'} flex items-center justify-center animate-pulse-glow`}>
             <HiVideoCamera className="text-4xl text-white/80" />
           </div>
 
-          <h2 className="text-lg font-bold text-white mb-1">Monetag রিওয়ার্ডেড ভিডিও</h2>
+          <h2 className="text-lg font-bold text-white mb-1">{currentProvider.label} রিওয়ার্ডেড ভিডিও</h2>
           <p className="text-sm text-white/50 mb-4">ছোট ভিডিও দেখে কয়েন অর্জন করুন</p>
 
           <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-3">
@@ -124,8 +145,8 @@ export default function Ads() {
           </div>
 
           <div className="flex items-center justify-center gap-1 mb-4">
-            <HiShieldCheck className="text-emerald-400 text-xs" />
-            <span className="text-[10px] text-emerald-400/60">Monetag দ্বারা সুরক্ষিত</span>
+            <currentProvider.icon className={`text-emerald-400 text-xs`} />
+            <span className="text-[10px] text-emerald-400/60">{currentProvider.label} দ্বারা সুরক্ষিত</span>
           </div>
 
           <button
@@ -136,7 +157,7 @@ export default function Ads() {
                 ? 'bg-white/5 text-white/20 cursor-not-allowed'
                 : watching
                 ? 'bg-white/10 text-white/40 cursor-not-allowed'
-                : 'bg-gradient-to-r from-violet-500 to-indigo-500 text-white hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98]'
+                : `bg-gradient-to-r ${currentProvider.color} text-white hover:shadow-lg hover:shadow-${provider === 'monetag' ? 'violet' : 'emerald'}-500/30 hover:scale-[1.02] active:scale-[0.98]`
             }`}
           >
             {watching ? (
@@ -167,7 +188,7 @@ export default function Ads() {
         </div>
         <div className="h-3 bg-white/5 rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-700"
+            className={`h-full rounded-full bg-gradient-to-r ${provider === 'monetag' ? 'from-violet-500 to-indigo-500' : 'from-emerald-500 to-teal-500'} transition-all duration-700`}
             style={{ width: `${watchPercent}%` }}
           />
         </div>

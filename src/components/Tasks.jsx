@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { database, ref, get, update } from '../config/firebase';
 import { TASKS, addReward, getTodayStr, checkDailyCheckin, coinsToBDT } from '../utils/helpers';
+import { loadAdsGramSDK, showAdsGramReward, logAdsGramImpression } from '../utils/adsgram';
 import { HiCheckCircle, HiArrowRight, HiSparkles, HiPlay, HiVideoCamera, HiCheck, HiShare, HiUser } from 'react-icons/hi';
 
 export default function Tasks() {
@@ -56,13 +57,31 @@ export default function Tasks() {
           break;
         }
         case 'task_adsgram': {
-          const loadingToast = toast.loading('AdsGram Task চেক করা হচ্ছে...');
-          await new Promise(r => setTimeout(r, 2000));
-          await markTaskCompleted(task.id);
-          await addReward(user.id, task.reward);
-          await refreshUser();
-          toast.dismiss(loadingToast);
-          toast.success(`🎉 +${task.reward} কয়েন অর্জন করেছেন!`);
+          const loadingToast = toast.loading('AdsGram অ্যাড লোড হচ্ছে...');
+          try {
+            await loadAdsGramSDK();
+            toast.dismiss(loadingToast);
+            toast.loading('AdsGram রিওয়ার্ডেড অ্যাড দেখুন...');
+            await showAdsGramReward();
+            toast.dismiss();
+            await markTaskCompleted(task.id);
+            await addReward(user.id, task.reward);
+            await refreshUser();
+            await logAdsGramImpression(user.id, 'completed', task.reward);
+            toast.success(`+${task.reward} কয়েন অর্জন করেছেন!`);
+          } catch (adErr) {
+            toast.dismiss();
+            const confirmed = window.confirm('AdsGram অ্যাড দেখেছেন?');
+            if (confirmed) {
+              await markTaskCompleted(task.id);
+              await addReward(user.id, task.reward);
+              await refreshUser();
+              await logAdsGramImpression(user.id, 'manual_verify', task.reward);
+              toast.success(`+${task.reward} কয়েন অর্জন করেছেন!`);
+            } else {
+              toast.error('অ্যাড শেষ পর্যন্ত দেখুন');
+            }
+          }
           break;
         }
         case 'task_daily_checkin': {

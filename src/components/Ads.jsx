@@ -15,7 +15,7 @@ const PROVIDERS = [
 export default function Ads() {
   const { user, refreshUser } = useAuth();
   const [watching, setWatching] = useState(false);
-  const [provider, setProvider] = useState('monetag');
+  const [provider, setProvider] = useState('adsgram');
   const [sdkReady, setSdkReady] = useState({ monetag: false, adsgram: false });
 
   const today = getTodayStr();

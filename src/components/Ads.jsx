@@ -1,22 +1,14 @@
 import { useState, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { settings, getTodayStr, coinsToBDT } from '../utils/helpers';
-import { loadMonitagSDK, showRewardedAd, verifyWithServer as verifyMonetag } from '../utils/monitag';
-import { loadAdsGramSDK, showAdsGramReward, verifyWithServer as verifyAdsGram } from '../utils/adsgram';
-import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck, HiSparkles, HiRefresh } from 'react-icons/hi';
-
-const PROVIDERS = [
-  { id: 'adsgram', label: 'AdsGram', icon: HiSparkles, color: 'from-emerald-500 to-teal-500' },
-  { id: 'monetag', label: 'Monetag', icon: HiShieldCheck, color: 'from-violet-500 to-indigo-500' },
-];
+import { database, ref, get, update } from '../config/firebase';
+import { settings, getTodayStr, addReward, coinsToBDT } from '../utils/helpers';
+import { HiPlay, HiVideoCamera, HiClock, HiInformationCircle } from 'react-icons/hi';
 
 export default function Ads() {
   const { user, refreshUser } = useAuth();
-  const [watching, setWatching] = useState(false);
-  const [provider, setProvider] = useState('adsgram');
+  const [claiming, setClaiming] = useState(false);
   const [timer, setTimer] = useState(0);
-  const [mode, setMode] = useState('sdk');
   const timerRef = useRef(null);
 
   const today = getTodayStr();
@@ -25,7 +17,6 @@ export default function Ads() {
   const watchPercent = (dailyWatchCount / settings.dailyWatchLimit) * 100;
 
   const startTimer = useCallback(() => {
-    setMode('timer');
     setTimer(30);
     timerRef.current = setInterval(() => {
       setTimer(prev => {
@@ -38,170 +29,124 @@ export default function Ads() {
     }, 1000);
   }, []);
 
-  const claimReward = async () => {
+  const handleClaim = async () => {
     if (timer > 0) return;
-    setWatching(true);
-    try {
-      const verify = provider === 'monetag' ? verifyMonetag : verifyAdsGram;
-      toast.loading('ভেরিফাই করা হচ্ছে...');
-      await verify(user.id);
-      await refreshUser();
-      toast.dismiss();
-      toast.success(`+${settings.watchReward} কয়েন অর্জন করেছেন!`);
-      setMode('sdk');
-      setTimer(0);
-    } catch (err) {
-      toast.dismiss();
-      toast.error('ভেরিফিকেশন ব্যর্থ');
-    } finally {
-      setWatching(false);
-    }
-  };
-
-  const handleWatchAd = async () => {
     if (watchLimitReached) {
       toast.error(`দৈনিক লিমিট পূর্ণ! (${settings.dailyWatchLimit}/${settings.dailyWatchLimit})`);
       return;
     }
 
-    setWatching(true);
-    toast.loading(`${provider === 'monetag' ? 'Monetag' : 'AdsGram'} লোড হচ্ছে...`);
-
+    setClaiming(true);
     try {
-      if (provider === 'monetag') {
-        await loadMonitagSDK();
-        await showRewardedAd();
-      } else {
-        await loadAdsGramSDK();
-        await showAdsGramReward();
+      const userRef = ref(database, `users/${user.id}`);
+      const snapshot = await get(userRef);
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const updates = {};
+
+        if (data.lastWatchDate === today) {
+          updates[`users/${user.id}/dailyWatchCount`] = (data.dailyWatchCount || 0) + 1;
+        } else {
+          updates[`users/${user.id}/dailyWatchCount`] = 1;
+          updates[`users/${user.id}/lastWatchDate`] = today;
+        }
+
+        await addReward(user.id, settings.watchReward);
+        await update(ref(database), updates);
+        await refreshUser();
+
+        toast.success(`+${settings.watchReward} কয়েন অর্জন করেছেন!`);
       }
-      toast.dismiss();
-      toast.loading('সার্ভার ভেরিফিকেশন চলছে...');
-      const verify = provider === 'monetag' ? verifyMonetag : verifyAdsGram;
-      await verify(user.id);
-      await refreshUser();
-      toast.dismiss();
-      toast.success(`+${settings.watchReward} কয়েন অর্জন করেছেন!`);
     } catch (err) {
-      toast.dismiss();
-      startTimer();
+      toast.error('ক্লেইম করতে ব্যর্থ। আবার চেষ্টা করুন');
     } finally {
-      setWatching(false);
+      setClaiming(false);
+      setTimer(0);
     }
   };
-
-  const currentProvider = PROVIDERS.find(p => p.id === provider);
 
   return (
     <div className="pb-4 animate-fade-in">
       <div className="mb-4">
         <h1 className="text-lg font-bold text-white">ভিডিও দেখে আয় করুন</h1>
-        <p className="text-xs text-white/40 mt-0.5">ভিডিও দেখে তাৎক্ষণিক কয়েন অর্জন করুন</p>
+        <p className="text-xs text-white/40 mt-0.5">৩০ সেকেন্ড অপেক্ষা করে কয়েন অর্জন করুন</p>
       </div>
 
-      <div className="glass rounded-2xl p-1.5 mb-4 flex animate-slide-up stagger-1">
-        {PROVIDERS.map(p => (
-          <button key={p.id} onClick={() => setProvider(p.id)}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-              provider === p.id ? `bg-gradient-to-r ${p.color} text-white shadow-lg` : 'text-white/40 hover:text-white/60'
-            }`}
-          >
-            <p.icon className="text-sm" /> {p.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="relative overflow-hidden rounded-3xl p-6 mb-4 animate-slide-up stagger-1">
-        <div className={`absolute inset-0 bg-gradient-to-br ${provider === 'monetag' ? 'from-violet-600/20 via-indigo-600/10 to-violet-600/20' : 'from-emerald-600/20 via-teal-600/10 to-emerald-600/20'}`} />
-        <div className={`absolute -top-20 -right-20 w-40 h-40 ${provider === 'monetag' ? 'bg-violet-500/20' : 'bg-emerald-500/20'} rounded-full blur-3xl`} />
+      <div className="relative overflow-hidden rounded-3xl p-6 mb-4 animate-slide-up">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 via-teal-600/10 to-emerald-600/20" />
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl" />
         <div className="absolute inset-0 bg-grid opacity-20" />
 
         <div className="relative z-10 text-center">
-          <div className={`w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br ${provider === 'monetag' ? 'from-violet-500/30 to-indigo-500/30' : 'from-emerald-500/30 to-teal-500/30'} flex items-center justify-center animate-pulse-glow`}>
+          <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-emerald-500/30 to-teal-500/30 flex items-center justify-center animate-pulse-glow">
             <HiVideoCamera className="text-4xl text-white/80" />
           </div>
 
-          {mode === 'timer' ? (
+          {timer > 0 ? (
             <>
-              <h2 className="text-lg font-bold text-white mb-1">ম্যানুয়াল ভেরিফিকেশন</h2>
-              <p className="text-sm text-white/50 mb-4">{timer > 0 ? `${timer} সেকেন্ড অপেক্ষা করুন` : 'এখন ক্লেইম করতে পারেন'}</p>
+              <h2 className="text-lg font-bold text-white mb-1">অপেক্ষা করুন...</h2>
+              <p className="text-5xl font-black gradient-text-green mb-4">{timer}s</p>
+              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden max-w-xs mx-auto mb-4">
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-1000" style={{ width: `${((30 - timer) / 30) * 100}%` }} />
+              </div>
+              <p className="text-xs text-white/40">ভিডিও দেখার মত অপেক্ষা করুন</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg font-bold text-white mb-1">রিওয়ার্ডেড ভিডিও</h2>
+              <p className="text-sm text-white/50 mb-4">৩০ সেকেন্ড অপেক্ষা করে কয়েন অর্জন করুন</p>
+
               <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4">
                 <span className="text-lg font-bold gradient-text-green">+{settings.watchReward}</span>
                 <span className="text-xs text-white/60">কয়েন</span>
               </div>
-              {timer > 0 ? (
-                <div className="py-4 rounded-2xl bg-white/5">
-                  <p className="text-4xl font-bold text-white mb-2">{timer}s</p>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mx-auto max-w-xs">
-                    <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all" style={{ width: `${((30 - timer) / 30) * 100}%` }} />
-                  </div>
-                </div>
-              ) : (
-                <button onClick={claimReward} disabled={watching}
-                  className="w-full py-4 rounded-2xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+
+              {!timer && timerRef.current === null ? (
+                <button
+                  onClick={startTimer}
+                  disabled={watchLimitReached}
+                  className={`w-full py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                    watchLimitReached
+                      ? 'bg-white/5 text-white/20 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02]'
+                  }`}
                 >
-                  {watching ? 'প্রসেসিং...' : `${settings.watchReward} কয়েন ক্লেইম করুন`}
+                  <HiPlay className="text-xl" />
+                  {watchLimitReached ? 'দৈনিক লিমিট পূর্ণ' : 'শুরু করুন'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleClaim}
+                  disabled={claiming}
+                  className="w-full py-4 rounded-2xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg transition-all disabled:opacity-50"
+                >
+                  {claiming ? 'প্রসেসিং...' : `${settings.watchReward} কয়েন ক্লেইম করুন`}
                 </button>
               )}
-              <button onClick={() => { setMode('sdk'); setTimer(0); clearInterval(timerRef.current); }}
-                className="w-full mt-3 py-2 text-xs text-white/40 hover:text-white/60 transition-all"
-              >
-                SDK অ্যাড ব্যবহার করুন
-              </button>
-            </>
-          ) : (
-            <>
-              <h2 className="text-lg font-bold text-white mb-1">{currentProvider.label} রিওয়ার্ডেড ভিডিও</h2>
-              <p className="text-sm text-white/50 mb-4">ছোট ভিডিও দেখে কয়েন অর্জন করুন</p>
-              <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-2">
-                <span className="text-lg font-bold gradient-text-green">+{settings.watchReward}</span>
-                <span className="text-xs text-white/60">কয়েন</span>
-              </div>
-              <div className="flex items-center justify-center gap-1 mb-4">
-                <currentProvider.icon className="text-emerald-400 text-xs" />
-                <span className="text-[10px] text-emerald-400/60">{currentProvider.label} দ্বারা সুরক্ষিত</span>
-              </div>
-              <button onClick={handleWatchAd} disabled={watching || watchLimitReached}
-                className={`w-full py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                  watchLimitReached ? 'bg-white/5 text-white/20 cursor-not-allowed' :
-                  watching ? 'bg-white/10 text-white/40 cursor-not-allowed' :
-                  `bg-gradient-to-r ${currentProvider.color} text-white hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]`
-                }`}
-              >
-                {watching ? (
-                  <><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>লোড হচ্ছে...</>
-                ) : (
-                  <><HiPlay className="text-xl" />{watchLimitReached ? 'দৈনিক লিমিট পূর্ণ' : 'ভিডিও দেখে আয় করুন'}</>
-                )}
-              </button>
-              <button onClick={startTimer}
-                className="w-full mt-3 py-2.5 rounded-xl border border-white/10 text-white/50 text-xs font-medium hover:bg-white/5 transition-all flex items-center justify-center gap-2"
-              >
-                <HiRefresh className="text-sm" /> SDK কাজ না করলে ম্যানুয়াল ব্যবহার করুন
-              </button>
             </>
           )}
         </div>
       </div>
 
-      <div className="glass rounded-2xl p-4 mb-3 animate-slide-up stagger-2">
+      <div className="glass rounded-2xl p-4 mb-3 animate-slide-up">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <HiClock className="text-violet-400" />
+            <HiClock className="text-emerald-400" />
             <span className="text-sm text-white/80 font-medium">আজকের অগ্রগতি</span>
           </div>
           <span className="text-xs text-white/40 font-mono">{dailyWatchCount} / {settings.dailyWatchLimit}</span>
         </div>
         <div className="h-3 bg-white/5 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full bg-gradient-to-r ${provider === 'monetag' ? 'from-violet-500 to-indigo-500' : 'from-emerald-500 to-teal-500'} transition-all duration-700`} style={{ width: `${watchPercent}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700" style={{ width: `${watchPercent}%` }} />
         </div>
         <div className="flex items-start gap-2 mt-3">
-          <HiInformationCircle className="text-violet-400 text-sm flex-shrink-0 mt-0.5" />
-          <p className="text-[10px] text-white/30">প্রতিদিন {settings.dailyWatchLimit}টি ভিডিও দেখতে পারবেন। ১০০০ কয়েন = ৫০৳</p>
+          <HiInformationCircle className="text-emerald-400 text-sm flex-shrink-0 mt-0.5" />
+          <p className="text-[10px] text-white/30">প্রতিদিন {settings.dailyWatchLimit}টি ভিডিও ক্লেইম করতে পারবেন। ১০০০ কয়েন = ৫০৳</p>
         </div>
       </div>
 
-      <div className="glass rounded-2xl p-4 animate-slide-up stagger-3">
+      <div className="glass rounded-2xl p-4 animate-slide-up">
         <p className="text-xs text-white/40 mb-1">আজকের ভিডিও থেকে আয়</p>
         <p className="text-3xl font-bold gradient-text-green">+{dailyWatchCount * settings.watchReward}</p>
         <p className="text-xs text-white/30 mt-0.5">কয়েন অর্জন করেছেন আজ</p>

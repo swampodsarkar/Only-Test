@@ -2,28 +2,19 @@
   "rules": {
     "users": {
       "$uid": {
-        ".read": "$uid === auth.uid || auth.token.isAdmin === true",
-        ".write": "auth.uid === $uid && (
-          (newData.hasChildren(['dailyWatchCount', 'lastWatchDate', 'weeklyEarned']) && 
-           !newData.hasChild('balance') && 
-           !newData.hasChild('totalEarned'))
-          ||
-          auth.token.isAdmin === true
-        )",
+        ".read": true,
+        ".write": "!newData.hasChild('balance') && !newData.hasChild('totalEarned') || data.exists()",
         "balance": {
-          ".write": "auth.token.isAdmin === true"
+          ".write": false
         },
         "totalEarned": {
-          ".write": "auth.token.isAdmin === true"
+          ".write": false
         },
         "dailyWatchCount": {
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 30"
         },
         "lastWatchDate": {
           ".validate": "newData.isString()"
-        },
-        "weeklyEarned": {
-          ".write": "$uid === auth.uid"
         },
         "dailyBonusStreak": {
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 7"
@@ -35,40 +26,33 @@
     },
     "ad_sessions": {
       "$sessionId": {
-        ".read": "auth.token.isAdmin === true",
-        ".write": "auth.uid === newData.child('userId').val() && !data.exists()",
+        ".read": true,
+        ".write": "!data.exists()",
         "status": {
-          ".validate": "newData.val() === 'pending' || newData.val() === 'verified'"
+          ".validate": "newData.val() === 'pending'"
         }
       }
     },
     "withdraw_requests": {
       "$requestId": {
-        ".read": "auth.token.isAdmin === true || data.child('userId').val() === auth.uid",
-        ".write": "auth.token.isAdmin === true || (!data.exists() && newData.child('userId').val() === auth.uid)",
-        "status": {
-          ".validate": "newData.val() === 'pending' || newData.val() === 'approved' || newData.val() === 'rejected'"
-        },
+        ".read": true,
+        ".write": "!data.exists()",
         "amount": {
           ".validate": "newData.isNumber() && newData.val() >= 1000"
         }
       }
     },
     "ad_impressions": {
-      "$impressionId": {
-        ".read": "auth.token.isAdmin === true",
-        ".write": "auth.uid === newData.child('userId').val()"
-      }
+      ".read": true,
+      ".write": true
     },
     "adsgram_impressions": {
-      "$impressionId": {
-        ".read": "auth.token.isAdmin === true",
-        ".write": "auth.uid === newData.child('userId').val()"
-      }
+      ".read": true,
+      ".write": true
     },
     "settings": {
       ".read": true,
-      ".write": "auth.token.isAdmin === true"
+      ".write": false
     }
   }
 }

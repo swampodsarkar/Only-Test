@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { database, ref, get, update } from '../config/firebase';
-import { settings, getTodayStr, addReward, coinsToBDT } from '../utils/helpers';
-import { loadMonitagSDK, showRewardedAd, logAdImpression } from '../utils/monitag';
-import { loadAdsGramSDK, showAdsGramReward, logAdsGramImpression } from '../utils/adsgram';
-import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck, HiSparkles, HiRefresh } from 'react-icons/hi';
+import { settings, getTodayStr, coinsToBDT } from '../utils/helpers';
+import { loadMonitagSDK, showRewardedAd, createAdSession as createMonetagSession, verifyWithServer as verifyMonetag } from '../utils/monitag';
+import { loadAdsGramSDK, showAdsGramReward, createAdSession as createAdsGramSession, verifyWithServer as verifyAdsGram } from '../utils/adsgram';
+import { HiPlay, HiVideoCamera, HiInformationCircle, HiClock, HiShieldCheck, HiSparkles } from 'react-icons/hi';
 
 const PROVIDERS = [
   { id: 'monetag', label: 'Monetag', icon: HiShieldCheck, color: 'from-violet-500 to-indigo-500' },
@@ -23,62 +22,44 @@ export default function Ads() {
   const watchLimitReached = dailyWatchCount >= settings.dailyWatchLimit;
   const watchPercent = (dailyWatchCount / settings.dailyWatchLimit) * 100;
 
-  const rewardAfterAd = async () => {
-    const userRef = ref(database, `users/${user.id}`);
-    const snapshot = await get(userRef);
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      const updates = {};
-      if (data.lastWatchDate === today) {
-        updates['users/' + user.id + '/dailyWatchCount'] = (data.dailyWatchCount || 0) + 1;
-      } else {
-        updates['users/' + user.id + '/dailyWatchCount'] = 1;
-        updates['users/' + user.id + '/lastWatchDate'] = today;
-      }
-      const weeklyKey = `weeklyEarned/${today}`;
-      updates['users/' + user.id + '/' + weeklyKey] = (data.weeklyEarned?.[today] || 0) + settings.watchReward;
-      await addReward(user.id, settings.watchReward);
-      await update(ref(database), updates);
-      await refreshUser();
-    }
-  };
-
-  const handleMonetag = async () => {
-    if (!sdkReady.monetag) {
-      await loadMonitagSDK();
-      setSdkReady(prev => ({ ...prev, monetag: true }));
-    }
-    await showRewardedAd();
-    await rewardAfterAd();
-    await logAdImpression(user.id, 'completed', settings.watchReward);
-    toast.success(`Monetag: +${settings.watchReward} কয়েন অর্জন করেছেন!`);
-  };
-
-  const handleAdsGram = async () => {
-    if (!sdkReady.adsgram) {
-      await loadAdsGramSDK();
-      setSdkReady(prev => ({ ...prev, adsgram: true }));
-    }
-    await showAdsGramReward();
-    await rewardAfterAd();
-    await logAdsGramImpression(user.id, 'completed', settings.watchReward);
-    toast.success(`AdsGram: +${settings.watchReward} কয়েন অর্জন করেছেন!`);
-  };
-
   const handleWatchAd = async () => {
     if (watchLimitReached) {
       toast.error(`দৈনিক লিমিট পূর্ণ! (${settings.dailyWatchLimit}/${settings.dailyWatchLimit})`);
       return;
     }
+
     setWatching(true);
     toast.loading(`${provider === 'monetag' ? 'Monetag' : 'AdsGram'} ভিডিও লোড হচ্ছে...`);
 
     try {
+      const createSession = provider === 'monetag' ? createMonetagSession : createAdsGramSession;
+      const verifyServer = provider === 'monetag' ? verifyMonetag : verifyAdsGram;
+
+      const adSessionId = await createSession(user.id);
+
       if (provider === 'monetag') {
-        await handleMonetag();
+        if (!sdkReady.monetag) {
+          await loadMonitagSDK();
+          setSdkReady(prev => ({ ...prev, monetag: true }));
+        }
+        await showRewardedAd();
       } else {
-        await handleAdsGram();
+        if (!sdkReady.adsgram) {
+          await loadAdsGramSDK();
+          setSdkReady(prev => ({ ...prev, adsgram: true }));
+        }
+        await showAdsGramReward();
       }
+
+      toast.dismiss();
+      toast.loading('সার্ভার ভেরিফিকেশন চলছে...');
+
+      await verifyServer(adSessionId, user.id);
+      await refreshUser();
+
+      toast.dismiss();
+      toast.success(`${provider === 'monetag' ? 'Monetag' : 'AdsGram'}: +${settings.watchReward} কয়েন অর্জন করেছেন!`);
+
     } catch (err) {
       toast.dismiss();
       toast.error('অ্যাড লোড করতে ব্যর্থ। আবার চেষ্টা করুন');
@@ -96,7 +77,6 @@ export default function Ads() {
         <p className="text-xs text-white/40 mt-0.5">ভিডিও দেখে তাৎক্ষণিক কয়েন অর্জন করুন</p>
       </div>
 
-      {/* Provider Toggle */}
       <div className="glass rounded-2xl p-1.5 mb-4 flex animate-slide-up stagger-1">
         {PROVIDERS.map(p => (
           <button
@@ -133,7 +113,7 @@ export default function Ads() {
           </div>
 
           <div className="flex items-center justify-center gap-1 mb-4">
-            <currentProvider.icon className={`text-emerald-400 text-xs`} />
+            <currentProvider.icon className="text-emerald-400 text-xs" />
             <span className="text-[10px] text-emerald-400/60">{currentProvider.label} দ্বারা সুরক্ষিত</span>
           </div>
 

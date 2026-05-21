@@ -1,7 +1,8 @@
-import { database, ref, push, serverTimestamp } from '../config/firebase';
+import { database, ref, push, set, serverTimestamp } from '../config/firebase';
 
 const MONITAG_PUBLISHER_ID = '52975';
 const MONITAG_SCRIPT = `https://cdn.monitag.com/sdk.js?p=${MONITAG_PUBLISHER_ID}`;
+const CLOUD_FUNCTION_URL = 'https://us-central1-gen-z-airdrop.cloudfunctions.net/monetagWebhook';
 
 let sdkLoaded = false;
 let loadCallbacks = [];
@@ -13,9 +14,7 @@ export const loadMonitagSDK = () => {
       sdkLoaded = true;
       return resolve(true);
     }
-
     loadCallbacks.push({ resolve, reject });
-
     const script = document.createElement('script');
     script.src = MONITAG_SCRIPT;
     script.async = true;
@@ -37,7 +36,6 @@ export const showRewardedAd = () => {
     if (!window.monitag || !window.monitag.cmd) {
       return reject(new Error('Monetag SDK not loaded'));
     }
-
     window.monitag.cmd.push(() => {
       try {
         window.monitag.showRewardedAd({
@@ -53,14 +51,37 @@ export const showRewardedAd = () => {
   });
 };
 
+export const createAdSession = async (userId) => {
+  const adSessionId = `${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const sessionRef = ref(database, `ad_sessions/${adSessionId}`);
+  await set(sessionRef, {
+    userId,
+    status: 'pending',
+    provider: 'monetag',
+    createdAt: Date.now(),
+    date: new Date().toISOString().split('T')[0],
+  });
+  return adSessionId;
+};
+
+export const verifyWithServer = async (adSessionId, userId) => {
+  const response = await fetch(CLOUD_FUNCTION_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adSessionId, userId, provider: 'monetag' }),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Server verification failed');
+  }
+  return response.json();
+};
+
 export const logAdImpression = async (userId, status, reward) => {
   try {
     const impressionsRef = ref(database, 'ad_impressions');
     await push(impressionsRef, {
-      userId,
-      provider: 'monetag',
-      status,
-      reward,
+      userId, provider: 'monetag', status, reward,
       timestamp: serverTimestamp(),
       date: new Date().toISOString().split('T')[0],
     });
